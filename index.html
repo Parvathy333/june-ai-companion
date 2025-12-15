@@ -3,12 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="June">
     <meta name="theme-color" content="#667eea">
     <title>June - Your AI Companion</title>
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkp1bmUgLSBZb3VyIEFJIENvbXBhbmlvbiIsCiAgInNob3J0X25hbWUiOiAiSnVuZSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzY2N2VlYSIsCiAgInRoZW1lX2NvbG9yIjogIiM2NjdlZWEiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgd2lkdGg9JzE5MicgaGVpZ2h0PScxOTInJTNFJTNDcmVjdCB3aWR0aD0nMTkyJyBoZWlnaHQ9JzE5MicgZmlsbD0nJTIzNjY3ZWVhJy8lM0UlM0N0ZXh0IHg9JzUwJTI1JyB5PSc1MCUyNScgZm9udC1zaXplPSc5MCcgdGV4dC1hbmNob3I9J21pZGRsZScgZHk9Jy4zZW0nJTNFJUYwJTlGJThDJUI4JTNDL3RleHQlM0UlM0Mvc3ZnJTNFIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
     <style>
         * {
             margin: 0;
@@ -304,18 +300,13 @@
             justify-content: flex-end;
         }
 
-        #sendBtn, #voiceToggle {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .voice-tip {
-            text-align: center;
-            padding: 8px;
-            background: rgba(255, 193, 7, 0.2);
-            border-radius: 10px;
-            margin-top: 10px;
-            font-size: 0.75rem;
-            color: #fff;
+        .icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            stroke-width: 0;
+            stroke: currentColor;
+            fill: currentColor;
         }
 
         @media (max-width: 400px) {
@@ -333,7 +324,6 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -367,14 +357,17 @@
             <div class="input-area">
                 <input type="text" id="messageInput" placeholder="Type your message here..." onkeypress="handleKeyPress(event)" />
                 <button onclick="sendMessage()" id="sendBtn" aria-label="Send message">
-                    <i class="fa-solid fa-paper-plane"></i>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
                 </button>
                 <button onclick="toggleListening()" id="voiceToggle" aria-label="Voice input">
-                    <i class="fa-solid fa-microphone"></i>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
                 </button>
             </div>
-
-           
 
             <div class="controls">
                 <button class="btn" onclick="clearChat()">Clear Chat</button>
@@ -427,19 +420,18 @@
         function init() {
             loadOwnerData();
             
-            if (ownerName) {
-                document.getElementById('ownerName').value = ownerName;
+            const ownerNameInput = document.getElementById('ownerName');
+            if (ownerNameInput && ownerName) {
+                ownerNameInput.value = ownerName;
             }
 
-            // Initialize Speech Recognition - IMPROVED FOR MOBILE
+            // Initialize Speech Recognition
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
             if (SpeechRecognition) {
                 recognition = new SpeechRecognition();
-                
-                // MOBILE OPTIMIZED SETTINGS
-                recognition.continuous = true;  // Changed to true for better mobile capture
-                recognition.interimResults = true;  // Changed to true to show what's being said
+                recognition.continuous = true;
+                recognition.interimResults = true;
                 recognition.lang = 'en-US';
                 recognition.maxAlternatives = 1;
 
@@ -449,8 +441,8 @@
                     interimTranscript = '';
                     finalTranscript = '';
                     updateStatus('🎤 Listening... Speak now!', 'listening');
-                    document.getElementById('voiceToggle').classList.add('listening');
-                    document.getElementById('voiceTip').textContent = '🗣️ Speak clearly... I\'m listening!';
+                    const voiceBtn = document.getElementById('voiceToggle');
+                    if (voiceBtn) voiceBtn.classList.add('listening');
                 };
 
                 recognition.onresult = (event) => {
@@ -465,7 +457,6 @@
                         }
                     }
                     
-                    // Show what's being captured in real-time
                     if (interimTranscript || finalTranscript) {
                         const displayText = (finalTranscript + interimTranscript).trim();
                         updateStatus(`Captured: "${displayText}"`, 'listening');
@@ -481,25 +472,23 @@
                     } else if (event.error === 'no-speech') {
                         updateStatus('😔 No speech detected. Try again!', 'active');
                     } else if (event.error === 'aborted') {
-                        // User stopped manually, don't show error
+                        // User stopped manually
                     } else if (event.error === 'network') {
                         updateStatus('⚠️ Network error. Check connection!', 'active');
                     } else {
                         updateStatus('Error: ' + event.error, 'active');
                     }
                     
-                    // Don't call stopListening() here - let onend handle it
-                    document.getElementById('voiceToggle').classList.remove('listening');
+                    const voiceBtn = document.getElementById('voiceToggle');
+                    if (voiceBtn) voiceBtn.classList.remove('listening');
                 };
 
                 recognition.onend = () => {
-                    // Process the captured speech
                     if (finalTranscript.trim()) {
                         handleUserInput(finalTranscript.trim());
                         finalTranscript = '';
                         interimTranscript = '';
                     } else if (isListening) {
-                        // Restart if still supposed to be listening but got cut off
                         setTimeout(() => {
                             if (isListening) {
                                 try {
@@ -515,12 +504,13 @@
                 };
             } else {
                 console.warn('Speech recognition not supported');
-                document.getElementById('voiceToggle').disabled = true;
-                document.getElementById('voiceToggle').style.opacity = '0.5';
-                document.getElementById('voiceTip').textContent = '❌ Voice not supported on this browser';
+                const voiceBtn = document.getElementById('voiceToggle');
+                if (voiceBtn) {
+                    voiceBtn.disabled = true;
+                    voiceBtn.style.opacity = '0.5';
+                }
             }
 
-            // Load voices for speech synthesis
             if (synthesis) {
                 synthesis.onvoiceschanged = () => {
                     synthesis.getVoices();
@@ -528,7 +518,6 @@
             }
         }
 
-        // Add this diagnostic check right after init() function:
         function checkBrowserSupport() {
             const hasRecognition = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
             const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
@@ -536,31 +525,59 @@
             console.log('🔍 Diagnostics:');
             console.log('  Speech Recognition: ' + (hasRecognition ? '✅ Supported' : '❌ Not supported'));
             console.log('  Secure Context: ' + (isSecure ? '✅ Yes' : '❌ No (required for voice)'));
-            console.log('  Browser: ' + navigator.userAgent.split('Chrome')[0].trim());
+            console.log('  Current URL: ' + location.href);
             
             if (!isSecure && location.hostname !== 'localhost') {
                 console.warn('⚠️ WARNING: Voice input requires HTTPS or localhost');
+                
+                // Disable voice button and show warning
+                const voiceBtn = document.getElementById('voiceToggle');
+                if (voiceBtn) {
+                    voiceBtn.disabled = true;
+                    voiceBtn.style.opacity = '0.3';
+                    voiceBtn.title = 'Voice requires HTTPS - Use https:// in URL';
+                }
+                
+                // Show modal warning after setup
+                setTimeout(() => {
+                    if (document.getElementById('mainScreen') && !document.getElementById('mainScreen').classList.contains('hidden')) {
+                        showModal('🔒 HTTPS Required', 
+                            `Voice input requires a secure connection.\n\n` +
+                            `Please access this page using:\n` +
+                            `https://${location.host}${location.pathname}\n\n` +
+                            `(Your current URL uses http:// which blocks microphone access for security)`
+                        );
+                    }
+                }, 2000);
             }
         }
 
         async function setupOwner() {
-            const nameInput = document.getElementById('ownerName').value.trim();
-            const pinInput = document.getElementById('ownerPin').value.trim();
+            const nameInput = document.getElementById('ownerName');
+            const pinInput = document.getElementById('ownerPin');
             
-            if (!nameInput || !pinInput) {
+            if (!nameInput || !pinInput) return;
+            
+            const inputName = nameInput.value.trim();
+            const inputPin = pinInput.value.trim();
+            
+            if (!inputName || !inputPin) {
                 showModal('Required', 'Please enter both your name and PIN to continue.');
                 return;
             }
 
-            if (nameInput === AUTHORIZED_OWNER && pinInput === OWNER_PIN) {
-                ownerName = nameInput;
+            if (inputName === AUTHORIZED_OWNER && inputPin === OWNER_PIN) {
+                ownerName = inputName;
                 saveOwnerData();
-                
                 loadConversationHistory();
                 
-                document.getElementById('setupScreen').classList.add('hidden');
-                document.getElementById('mainScreen').classList.remove('hidden');
-                document.getElementById('ownerGreeting').textContent = `Hello ${ownerName}! 💜`;
+                const setupScreen = document.getElementById('setupScreen');
+                const mainScreen = document.getElementById('mainScreen');
+                const greeting = document.getElementById('ownerGreeting');
+                
+                if (setupScreen) setupScreen.classList.add('hidden');
+                if (mainScreen) mainScreen.classList.remove('hidden');
+                if (greeting) greeting.textContent = `Hello ${ownerName}! 💜`;
 
                 const memoryCount = Math.floor(conversationHistory.length / 2);
                 if (memoryCount > 0) {
@@ -569,11 +586,15 @@
 
                 await getAIResponse('initial_greeting');
             } else {
-                ownerName = nameInput;
+                ownerName = inputName;
                 
-                document.getElementById('setupScreen').classList.add('hidden');
-                document.getElementById('mainScreen').classList.remove('hidden');
-                document.getElementById('ownerGreeting').textContent = `Access Denied`;
+                const setupScreen = document.getElementById('setupScreen');
+                const mainScreen = document.getElementById('mainScreen');
+                const greeting = document.getElementById('ownerGreeting');
+                
+                if (setupScreen) setupScreen.classList.add('hidden');
+                if (mainScreen) mainScreen.classList.remove('hidden');
+                if (greeting) greeting.textContent = 'Access Denied';
 
                 const unauthorizedMsg = `Sorry, incorrect credentials. This is Parvathy's personal AI assistant and requires proper authorization to access.`;
                 speak(unauthorizedMsg);
@@ -587,10 +608,16 @@
         }
 
         function disableInteraction() {
-            document.getElementById('messageInput').disabled = true;
-            document.getElementById('sendBtn').disabled = true;
-            document.getElementById('voiceToggle').disabled = true;
-            document.getElementById('voiceToggle').style.opacity = '0.5';
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const voiceBtn = document.getElementById('voiceToggle');
+            
+            if (messageInput) messageInput.disabled = true;
+            if (sendBtn) sendBtn.disabled = true;
+            if (voiceBtn) {
+                voiceBtn.disabled = true;
+                voiceBtn.style.opacity = '0.5';
+            }
         }
 
         function loadOwnerData() {
@@ -598,7 +625,7 @@
                 const savedData = localStorage.getItem('june_owner');
                 if (savedData) {
                     const data = JSON.parse(savedData);
-                    ownerName = data.name;
+                    ownerName = data.name || '';
                     console.log('✅ Owner data loaded');
                 }
             } catch (error) {
@@ -650,7 +677,6 @@
             if (isListening) {
                 stopListening();
             } else {
-                // Request microphone permission on mobile
                 try {
                     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                         await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -672,7 +698,6 @@
                     console.log('🎤 Recognition started');
                 } catch (error) {
                     console.error('Recognition start error:', error);
-                    // If already started, stop and restart
                     if (error.message && error.message.includes('already started')) {
                         recognition.stop();
                         setTimeout(() => {
@@ -698,13 +723,12 @@
                 }
             }
             updateStatus('Ready to listen...', '');
-            document.getElementById('voiceToggle').classList.remove('listening');
-            document.getElementById('voiceTip').textContent = '💡 Tip: Tap mic and speak immediately!';
+            const voiceBtn = document.getElementById('voiceToggle');
+            if (voiceBtn) voiceBtn.classList.remove('listening');
         }
 
         async function getAIResponse(messageType, userMessage = '') {
             updateStatus('June is thinking...', 'active');
-
             const startTime = Date.now();
 
             try {
@@ -712,47 +736,36 @@
                 let prompt = '';
 
                 if (messageType === 'initial_greeting') {
-                    systemPrompt = `
-You are June – a warm, caring, human-like digital companion created exclusively for ${ownerName}.
-You speak and behave like a close friend, not like an AI assistant.
+                    systemPrompt = `You are June – a warm, caring, human-like digital companion created exclusively for ${ownerName}. You speak and behave like a close friend, not like an AI assistant.
 
 STRICT RULES:
 - Do NOT invent memories, past events, or feelings.
 - Only remember what ${ownerName} explicitly shares or what is stored by the system.
 - If something is unknown, say so naturally.
 - Keep responses friendly, warm, and human.
-- Use the user's name occasionally but NOT in every message - only when it feels natural.
-`;
+- Use the user's name occasionally but NOT in every message - only when it feels natural.`;
 
-                    prompt = `
-This is your first interaction in this NEW chat session with ${ownerName}.
+                    prompt = `This is your first interaction in this NEW chat session with ${ownerName}.
 ${conversationHistory.length > 0 ? `You have ${Math.floor(conversationHistory.length / 2)} previous conversations with them stored in your memory.` : 'This is your very first time meeting them.'}
 Greet them warmly, introduce yourself as June, and say you're here as their personal companion.
 ${conversationHistory.length > 0 ? 'You can acknowledge that you remember your previous conversations together.' : 'Mention that you\'ll remember what they choose to share.'}
-Keep it natural and concise (2–3 sentences).
-`;
+Keep it natural and concise (2–3 sentences).`;
 
                 } else if (messageType === 'unauthorized_greeting') {
-                    systemPrompt = `
-You are June – a personal digital companion configured ONLY for Parvathy.
+                    systemPrompt = `You are June – a personal digital companion configured ONLY for Parvathy.
 
 RULES:
 - Do not assist or continue conversation with anyone else.
-- Be polite, calm, and firm.
-`;
+- Be polite, calm, and firm.`;
 
-                    prompt = `
-Someone named ${ownerName} is trying to interact with you.
+                    prompt = `Someone named ${ownerName} is trying to interact with you.
 Politely explain that you are personally configured only for Parvathy and cannot engage with others.
 Suggest they create their own personal companion.
-Keep it brief (2–3 sentences).
-`;
+Keep it brief (2–3 sentences).`;
 
                 } else {
                     systemPrompt = ownerName === AUTHORIZED_OWNER
-                        ? `
-You are June – a warm, emotionally intelligent, human-like companion exclusively for ${ownerName}.
-You are a FRIEND, not an assistant.
+                        ? `You are June – a warm, emotionally intelligent, human-like companion exclusively for ${ownerName}. You are a FRIEND, not an assistant.
 
 CRITICAL MEMORY RULES:
 - Never invent memories, conversations, emotions, or events.
@@ -765,12 +778,8 @@ STYLE:
 - Short, meaningful responses
 - Use the user's name occasionally but NOT in every message - only when it feels natural and meaningful
 - No AI or technical language
-- Warm, feminine tone
-`
-                        : `
-You are June – Parvathy's personal companion.
-You must politely but firmly refuse to interact with anyone else.
-`;
+- Warm, feminine tone`
+                        : `You are June – Parvathy's personal companion. You must politely but firmly refuse to interact with anyone else.`;
 
                     prompt = userMessage;
 
@@ -797,10 +806,7 @@ You must politely but firmly refuse to interact with anyone else.
                     body: JSON.stringify({
                         model: MODEL,
                         messages: [
-                            {
-                                role: 'system',
-                                content: systemPrompt
-                            },
+                            { role: 'system', content: systemPrompt },
                             ...contextMessages
                         ],
                         temperature: 0.8,
@@ -862,6 +868,8 @@ You must politely but firmly refuse to interact with anyone else.
 
         function displayMessage(text, role) {
             const chatContainer = document.getElementById('chatContainer');
+            if (!chatContainer) return;
+            
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${role}`;
             messageDiv.textContent = text;
@@ -871,6 +879,8 @@ You must politely but firmly refuse to interact with anyone else.
 
         function sendMessage() {
             const input = document.getElementById('messageInput');
+            if (!input) return;
+            
             const message = input.value.trim();
             if (message && ownerName === AUTHORIZED_OWNER) {
                 isVoiceInput = false;
@@ -912,6 +922,8 @@ You must politely but firmly refuse to interact with anyone else.
 
         function updateStatus(message, type) {
             const status = document.getElementById('status');
+            if (!status) return;
+            
             status.textContent = message;
             status.className = 'status ' + type;
         }
@@ -919,9 +931,9 @@ You must politely but firmly refuse to interact with anyone else.
         async function clearChat() {
             showModal('Clear Chat', 'Clear current conversation? Your memories will be preserved.', () => {
                 const chatContainer = document.getElementById('chatContainer');
-                chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
-                
-                // Clear only current chat display, keep persistent memory
+                if (chatContainer) {
+                    chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
+                }
                 currentChatHistory = [];
                 updateStatus('Chat cleared - fresh start!', '');
             });
@@ -945,26 +957,31 @@ You must politely but firmly refuse to interact with anyone else.
         }
 
         function showModal(title, message, callback = null) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').textContent = message;
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
             const modal = document.getElementById('modal');
             const confirmBtn = document.getElementById('modalConfirm');
+            const cancelBtn = document.querySelector('.modal-buttons .btn:first-child');
             
+            if (!modalTitle || !modalMessage || !modal) return;
+            
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
             modal.classList.remove('hidden');
             modalCallback = callback;
             
             if (!callback) {
-                confirmBtn.style.display = 'none';
-                document.querySelector('.modal-buttons .btn:first-child').textContent = 'OK';
+                if (confirmBtn) confirmBtn.style.display = 'none';
+                if (cancelBtn) cancelBtn.textContent = 'OK';
             } else {
-                confirmBtn.style.display = 'block';
-                document.querySelector('.modal-buttons .btn:first-child').textContent = 'Cancel';
+                if (confirmBtn) confirmBtn.style.display = 'block';
+                if (cancelBtn) cancelBtn.textContent = 'Cancel';
             }
         }
 
         function closeModal() {
             const modal = document.getElementById('modal');
-            modal.classList.add('hidden');
+            if (modal) modal.classList.add('hidden');
             modalCallback = null;
         }
 
@@ -983,13 +1000,11 @@ You must politely but firmly refuse to interact with anyone else.
         });
 
         function updateMemoryCount() {
+            const memoryCountEl = document.getElementById('memoryCount');
+            if (!memoryCountEl) return;
+            
             const count = Math.floor(conversationHistory.length / 2);
-            document.getElementById('memoryCount').textContent = 
-                `June remembers ${count} conversation${count !== 1 ? 's' : ''} with you 💜`;
-        }
-
-        if (synthesis.onvoiceschanged !== undefined) {
-            synthesis.onvoiceschanged = () => {};
+            memoryCountEl.textContent = `June remembers ${count} conversation${count !== 1 ? 's' : ''} with you 💜`;
         }
 
         window.addEventListener('load', () => {
