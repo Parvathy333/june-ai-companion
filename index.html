@@ -308,6 +308,16 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
+        .voice-tip {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 193, 7, 0.2);
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #fff;
+        }
+
         @media (max-width: 400px) {
             .container {
                 padding: 20px;
@@ -364,6 +374,10 @@
                 </button>
             </div>
 
+            <div class="voice-tip" id="voiceTip">
+                💡 Tip: Tap mic and speak immediately!
+            </div>
+
             <div class="controls">
                 <button class="btn" onclick="clearChat()">Clear Chat</button>
                 <button class="btn" onclick="viewMemories()">Memories</button>
@@ -408,6 +422,8 @@
         let synthesis = window.speechSynthesis;
         let modalCallback = null;
         let isVoiceInput = false;
+        let interimTranscript = '';
+        let finalTranscript = '';
 
         // Initialize
         function init() {
@@ -417,25 +433,45 @@
                 document.getElementById('ownerName').value = ownerName;
             }
 
-            // Initialize Speech Recognition - with mobile support
+            // Initialize Speech Recognition - IMPROVED FOR MOBILE
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
             if (SpeechRecognition) {
                 recognition = new SpeechRecognition();
-                recognition.continuous = true;
-                recognition.interimResults = true;
+                
+                // MOBILE OPTIMIZED SETTINGS
+                recognition.continuous = true;  // Changed to true for better mobile capture
+                recognition.interimResults = true;  // Changed to true to show what's being said
                 recognition.lang = 'en-US';
+                recognition.maxAlternatives = 1;
 
                 recognition.onstart = () => {
                     isListening = true;
                     isVoiceInput = true;
-                    updateStatus('Listening...', 'listening');
+                    interimTranscript = '';
+                    finalTranscript = '';
+                    updateStatus('🎤 Listening... Speak now!', 'listening');
                     document.getElementById('voiceToggle').classList.add('listening');
+                    document.getElementById('voiceTip').textContent = '🗣️ Speak clearly... I\'m listening!';
                 };
 
-                recognition.onresult = async (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    await handleUserInput(transcript);
+                recognition.onresult = (event) => {
+                    interimTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    // Show what's being captured in real-time
+                    if (interimTranscript || finalTranscript) {
+                        const displayText = (finalTranscript + interimTranscript).trim();
+                        updateStatus(`Captured: "${displayText}"`, 'listening');
+                    }
                 };
 
                 recognition.onerror = (event) => {
@@ -445,7 +481,9 @@
                         updateStatus('⚠️ Microphone permission denied', 'error');
                         showModal('Microphone Access', 'Please allow microphone access in your browser settings to use voice input.');
                     } else if (event.error === 'no-speech') {
-                        updateStatus('No speech detected. Try again.', 'error');
+                        updateStatus('😔 No speech detected. Try again!', 'error');
+                    } else if (event.error === 'aborted') {
+                        // User stopped manually, don't show error
                     } else {
                         updateStatus('Error: ' + event.error, 'error');
                     }
@@ -453,12 +491,31 @@
                 };
 
                 recognition.onend = () => {
-                    stopListening();
+                    // Process the captured speech
+                    if (finalTranscript.trim()) {
+                        handleUserInput(finalTranscript.trim());
+                        finalTranscript = '';
+                        interimTranscript = '';
+                    } else if (isListening) {
+                        // Restart if still supposed to be listening but got cut off
+                        setTimeout(() => {
+                            if (isListening) {
+                                try {
+                                    recognition.start();
+                                } catch (e) {
+                                    console.log('Recognition restart failed:', e);
+                                }
+                            }
+                        }, 100);
+                    } else {
+                        stopListening();
+                    }
                 };
             } else {
                 console.warn('Speech recognition not supported');
                 document.getElementById('voiceToggle').disabled = true;
                 document.getElementById('voiceToggle').style.opacity = '0.5';
+                document.getElementById('voiceTip').textContent = '❌ Voice not supported on this browser';
             }
 
             // Load voices for speech synthesis
@@ -592,10 +649,23 @@
         function startListening() {
             if (recognition && ownerName === AUTHORIZED_OWNER) {
                 try {
+                    finalTranscript = '';
+                    interimTranscript = '';
                     recognition.start();
+                    console.log('🎤 Recognition started');
                 } catch (error) {
                     console.error('Recognition start error:', error);
-                    updateStatus('Error starting voice input', 'error');
+                    // If already started, stop and restart
+                    if (error.message && error.message.includes('already started')) {
+                        recognition.stop();
+                        setTimeout(() => {
+                            try {
+                                recognition.start();
+                            } catch (e) {
+                                console.error('Restart failed:', e);
+                            }
+                        }, 500);
+                    }
                 }
             }
         }
@@ -605,12 +675,14 @@
             if (recognition) {
                 try {
                     recognition.stop();
+                    console.log('🛑 Recognition stopped');
                 } catch (error) {
                     console.error('Recognition stop error:', error);
                 }
             }
             updateStatus('Ready to listen...', '');
             document.getElementById('voiceToggle').classList.remove('listening');
+            document.getElementById('voiceTip').textContent = '💡 Tip: Tap mic and speak immediately!';
         }
 
         async function getAIResponse(messageType, userMessage = '') {
@@ -906,5 +978,4 @@ You must politely but firmly refuse to interact with anyone else.
         window.addEventListener('load', init);
     </script>
 </body>
-
 </html>
