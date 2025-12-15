@@ -422,20 +422,31 @@
             
             if (SpeechRecognition) {
                 recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
+                recognition.continuous = true;  // Keep listening
+                recognition.interimResults = true;  // Show interim results
                 recognition.lang = 'en-US';
+                recognition.maxAlternatives = 1;
 
                 recognition.onstart = () => {
                     isListening = true;
                     isVoiceInput = true;
-                    updateStatus('Listening...', 'listening');
+                    updateStatus('🎤 Listening... Speak now!', 'listening');
                     document.getElementById('voiceToggle').classList.add('listening');
                 };
 
                 recognition.onresult = async (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    await handleUserInput(transcript);
+                    const last = event.results.length - 1;
+                    const transcript = event.results[last][0].transcript;
+                    
+                    // Only process final results
+                    if (event.results[last].isFinal) {
+                        console.log('Final transcript:', transcript);
+                        stopListening();
+                        await handleUserInput(transcript);
+                    } else {
+                        // Show interim results
+                        updateStatus('🎤 Hearing: ' + transcript, 'listening');
+                    }
                 };
 
                 recognition.onerror = (event) => {
@@ -446,21 +457,39 @@
                         showModal('Microphone Access', 'Please allow microphone access in your browser settings to use voice input.');
                     } else if (event.error === 'no-speech') {
                         updateStatus('No speech detected. Try again.', 'error');
+                        setTimeout(() => {
+                            if (isListening) {
+                                try {
+                                    recognition.start();
+                                } catch (e) {
+                                    console.log('Could not restart:', e);
+                                }
+                            }
+                        }, 500);
+                    } else if (event.error === 'aborted') {
+                        // Ignore aborted errors
+                        console.log('Recognition aborted');
                     } else {
                         updateStatus('Error: ' + event.error, 'error');
                     }
-                    stopListening();
+                    
+                    if (event.error !== 'no-speech') {
+                        stopListening();
+                    }
                 };
 
                 recognition.onend = () => {
-                    stopListening();
+                    // Auto-restart if still in listening mode
+                    if (isListening) {
+                        try {
+                            recognition.start();
+                        } catch (error) {
+                            console.log('Could not restart recognition:', error);
+                            stopListening();
+                        }
+                    }
                 };
-            } else {
-                console.warn('Speech recognition not supported');
-                document.getElementById('voiceToggle').disabled = true;
-                document.getElementById('voiceToggle').style.opacity = '0.5';
             }
-
             // Load voices for speech synthesis
             if (synthesis) {
                 synthesis.onvoiceschanged = () => {
