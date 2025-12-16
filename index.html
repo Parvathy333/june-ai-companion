@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<! DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,18 +8,18 @@
     <meta name="apple-mobile-web-app-title" content="June">
     <meta name="theme-color" content="#667eea">
     <title>June - Your AI Companion</title>
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkp1bmUgLSBZb3VyIEFJIENvbXBhbmlvbiIsCiAgInNob3J0X25hbWUiOiAiSnVuZSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzY2N2VlYSIsCiAgInRoZW1lX2NvbG9yIjogIiM2NjdlZWEiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgd2lkdGg9JzE5MicgaGVpZ2h0PScxOTInJTNFJTNDcmVjdCB3aWR0aD0nMTkyJyBoZWlnaHQ9JzE5MicgZmlsbD0nJTIzNjY3ZWVhJy8lM0UlM0N0ZXh0IHg9JzUwJTI1JyB5PSc1MCUyNScgZm9udC1zaXplPSc5MCcgdGV4dC1hbmNob3I9J21pZGRsZScgZHk9Jy4zZW0nJTNFJUYwJTlGJThDJUI4JTNDL3RleHQlM0UlM0Mvc3ZnJTNFIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkp1bmUgLSBZb3VyIEFJIENvbXBhbmlvbiIsCiAgInNob3J0X25hbWUiOiAiSnVuZSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRh[...]
     <style>
         * {
             margin: 0;
-            padding: 0;
+            padding:  0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color:  transparent;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             min-height: -webkit-fill-available;
             display: flex;
@@ -42,7 +42,7 @@
             -webkit-backdrop-filter: blur(10px);
             border-radius: 30px;
             padding: 25px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            box-shadow:  0 8px 32px 0 rgba(31, 38, 135, 0.37);
             border: 1px solid rgba(255, 255, 255, 0.18);
         }
 
@@ -51,13 +51,13 @@
             margin-bottom: 20px;
         }
 
-        .header h1 {
+        . header h1 {
             font-size: 2rem;
             margin-bottom: 10px;
             background: linear-gradient(45deg, #fff, #a8edea);
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            -webkit-text-fill-color:  transparent;
+            background-clip:  text;
         }
 
         .header p {
@@ -65,22 +65,22 @@
             font-size: 0.95rem;
         }
 
-        .status {
+        . status {
             text-align: center;
             padding: 12px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
-            margin-bottom: 15px;
-            font-size: 0.85rem;
+            margin-bottom:  15px;
+            font-size:  0.85rem;
         }
 
-        .status.active {
+        . status.active {
             background: rgba(76, 175, 80, 0.3);
         }
 
         .status.listening {
             background: rgba(33, 150, 243, 0.3);
-            animation: pulse 1.5s ease-in-out infinite;
+            animation: pulse 1. 5s ease-in-out infinite;
         }
 
         @keyframes pulse {
@@ -88,13 +88,13 @@
             50% { opacity: 0.6; }
         }
 
-        .chat-container {
+        . chat-container {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 15px;
-            max-height: 40vh;
-            overflow-y: auto;
-            margin: 15px 0;
+            max-height:  40vh;
+            overflow-y:  auto;
+            margin:  15px 0;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -102,8 +102,8 @@
             width: 6px;
         }
 
-        .chat-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
+        . chat-container::-webkit-scrollbar-track {
+            background:  rgba(255, 255, 255, 0.1);
             border-radius: 10px;
         }
 
@@ -121,7 +121,7 @@
             font-size: 0.9rem;
         }
 
-        .chat-message.user {
+        .chat-message. user {
             background: rgba(102, 126, 234, 0.3);
             margin-left: 20px;
             text-align: right;
@@ -132,14 +132,14 @@
             margin-right: 20px;
         }
 
-        .chat-message.system {
+        .chat-message. system {
             background: rgba(244, 67, 54, 0.3);
             text-align: center;
             font-style: italic;
             font-size: 0.85rem;
         }
 
-        .input-area {
+        . input-area {
             display: flex;
             gap: 8px;
             margin-top: 15px;
@@ -156,7 +156,7 @@
             outline: none;
         }
 
-        .input-area input::placeholder {
+        .input-area input:: placeholder {
             color: rgba(255, 255, 255, 0.6);
         }
 
@@ -167,7 +167,7 @@
             background: rgba(255, 255, 255, 0.3);
             color: white;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 1. 1rem;
             transition: all 0.3s ease;
             width: 45px;
             height: 45px;
@@ -187,14 +187,14 @@
             cursor: not-allowed;
         }
         
-        .input-area button.listening {
+        .input-area button. listening {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             animation: listening-pulse 1s ease-in-out infinite;
         }
         
         @keyframes listening-pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform:  scale(1.1); }
         }
 
         .controls {
@@ -229,13 +229,13 @@
 
         .setup-screen input {
             width: 100%;
-            padding: 15px;
+            padding:  15px;
             border: none;
             border-radius: 15px;
             background: rgba(255, 255, 255, 0.2);
             color: white;
             font-size: 16px;
-            margin: 10px 0;
+            margin:  10px 0;
             outline: none;
         }
 
@@ -247,7 +247,7 @@
             letter-spacing: 3px;
         }
 
-        .hidden {
+        . hidden {
             display: none;
         }
 
@@ -275,7 +275,7 @@
         .modal-content {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 25px;
-            border-radius: 20px;
+            border-radius:  20px;
             max-width: 350px;
             width: 100%;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
@@ -294,28 +294,18 @@
             font-size: 0.9rem;
         }
         
-        .modal.hidden {
+        .modal. hidden {
             display: none;
         }
 
         .modal-buttons {
             display: flex;
             gap: 10px;
-            justify-content: flex-end;
+            justify-content:  flex-end;
         }
 
         #sendBtn, #voiceToggle {
             background: rgba(255, 255, 255, 0.3);
-        }
-
-        .voice-tip {
-            text-align: center;
-            padding: 8px;
-            background: rgba(255, 193, 7, 0.2);
-            border-radius: 10px;
-            margin-top: 10px;
-            font-size: 0.75rem;
-            color: #fff;
         }
 
         @media (max-width: 400px) {
@@ -323,13 +313,13 @@
                 padding: 20px;
             }
             
-            .header h1 {
+            . header h1 {
                 font-size: 1.8rem;
             }
             
             .btn {
                 padding: 8px 15px;
-                font-size: 0.8rem;
+                font-size:  0.8rem;
             }
         }
     </style>
@@ -340,10 +330,10 @@
         <!-- Setup Screen -->
         <div id="setupScreen" class="setup-screen">
             <div class="header">
-                <h1>👋 Hello!</h1>
+                <h1>👋 Hello! </h1>
                 <p>I'm June, your personal AI companion</p>
             </div>
-            <p style="margin-bottom: 20px;">Please enter your name and PIN to access June.</p>
+            <p style="margin-bottom: 20px;">Please enter your name and PIN to access June. </p>
             <input type="text" id="ownerName" placeholder="Enter your name" />
             <input type="password" id="ownerPin" placeholder="Enter your pin" />
             <button class="btn" onclick="setupOwner()" style="width: 100%;">Start Journey with June</button>
@@ -357,7 +347,7 @@
             </div>
 
             <div class="status" id="status">
-                Ready to listen...
+                Ready to listen... 
             </div>
 
             <div class="chat-container" id="chatContainer">
@@ -372,10 +362,6 @@
                 <button onclick="toggleListening()" id="voiceToggle" aria-label="Voice input">
                     <i class="fa-solid fa-microphone"></i>
                 </button>
-            </div>
-
-            <div class="voice-tip" id="voiceTip">
-                💡 Tip: Tap mic and speak immediately!
             </div>
 
             <div class="controls">
@@ -402,10 +388,10 @@
 
     <script>
         // ============================================
-        // 🔒 SECURITY CONFIGURATION - CHANGE YOUR PIN HERE!
+        // 🔒 SECURITY CONFIGURATION - CHANGE YOUR PIN HERE! 
         // ============================================
         const AUTHORIZED_OWNER = 'Parvathy';  // Your name
-        const OWNER_PIN = '1234';              // 👈 CHANGE THIS TO YOUR SECRET PIN!
+        const OWNER_PIN = '1234';              // 👈 CHANGE THIS TO YOUR SECRET PIN! 
         // ============================================
         
         // API Configuration
@@ -422,8 +408,7 @@
         let synthesis = window.speechSynthesis;
         let modalCallback = null;
         let isVoiceInput = false;
-        let interimTranscript = '';
-        let finalTranscript = '';
+        let recognitionTimeout = null;
 
         // Initialize
         function init() {
@@ -433,101 +418,99 @@
                 document.getElementById('ownerName').value = ownerName;
             }
 
-            // Initialize Speech Recognition - IMPROVED FOR MOBILE
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            // Initialize Speech Recognition - OPTIMIZED FOR MOBILE
+            const SpeechRecognition = window. SpeechRecognition || window.webkitSpeechRecognition;
             
             if (SpeechRecognition) {
                 recognition = new SpeechRecognition();
                 
                 // MOBILE OPTIMIZED SETTINGS
-                recognition.continuous = true;  // Changed to true for better mobile capture
-                recognition.interimResults = true;  // Changed to true to show what's being said
+                recognition.continuous = false;
+                recognition.interimResults = false;
                 recognition.lang = 'en-US';
                 recognition.maxAlternatives = 1;
 
                 recognition.onstart = () => {
+                    console.log('🎤 Speech recognition started');
                     isListening = true;
                     isVoiceInput = true;
-                    interimTranscript = '';
-                    finalTranscript = '';
-                    updateStatus('🎤 Listening... Speak now!', 'listening');
+                    updateStatus('🎤 Listening...  Speak now!', 'listening');
                     document.getElementById('voiceToggle').classList.add('listening');
-                    document.getElementById('voiceTip').textContent = '🗣️ Speak clearly... I\'m listening!';
+                    
+                    // Auto-stop after 10 seconds of listening
+                    recognitionTimeout = setTimeout(() => {
+                        if (isListening) {
+                            console.log('⏱️ Auto-stopping recognition after timeout');
+                            stopListening();
+                        }
+                    }, 10000);
                 };
 
                 recognition.onresult = (event) => {
-                    interimTranscript = '';
+                    clearTimeout(recognitionTimeout);
                     
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        const transcript = event.results[i][0].transcript;
-                        if (event.results[i].isFinal) {
-                            finalTranscript += transcript + ' ';
-                        } else {
-                            interimTranscript += transcript;
-                        }
+                    const transcript = event.results[0][0].transcript;
+                    console.log('📝 Captured:', transcript);
+                    
+                    if (transcript && transcript.trim()) {
+                        handleUserInput(transcript.trim());
+                    } else {
+                        updateStatus('No speech detected.  Try again! ', '');
+                        isVoiceInput = false;
                     }
                     
-                    // Show what's being captured in real-time
-                    if (interimTranscript || finalTranscript) {
-                        const displayText = (finalTranscript + interimTranscript).trim();
-                        updateStatus(`Captured: "${displayText}"`, 'listening');
-                    }
+                    stopListening();
                 };
 
                 recognition.onerror = (event) => {
-                    console.error('Speech recognition error:', event.error);
+                    console.error('❌ Speech recognition error:', event. error);
+                    clearTimeout(recognitionTimeout);
                     
                     if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                        updateStatus('⚠️ Microphone permission denied', 'error');
+                        updateStatus('⚠️ Microphone permission denied', '');
                         showModal('Microphone Access', 'Please allow microphone access in your browser settings to use voice input.');
                     } else if (event.error === 'no-speech') {
-                        updateStatus('😔 No speech detected. Try again!', 'error');
+                        updateStatus('No speech detected. Try again!', '');
                     } else if (event.error === 'aborted') {
-                        // User stopped manually, don't show error
+                        // User stopped manually
+                        updateStatus('Ready to listen...', '');
+                    } else if (event.error === 'network') {
+                        updateStatus('Network error. Check connection. ', '');
                     } else {
-                        updateStatus('Error: ' + event.error, 'error');
+                        updateStatus('Microphone error. Try again. ', '');
                     }
+                    
+                    isVoiceInput = false;
                     stopListening();
                 };
 
                 recognition.onend = () => {
-                    // Process the captured speech
-                    if (finalTranscript.trim()) {
-                        handleUserInput(finalTranscript.trim());
-                        finalTranscript = '';
-                        interimTranscript = '';
-                    } else if (isListening) {
-                        // Restart if still supposed to be listening but got cut off
-                        setTimeout(() => {
-                            if (isListening) {
-                                try {
-                                    recognition.start();
-                                } catch (e) {
-                                    console.log('Recognition restart failed:', e);
-                                }
-                            }
-                        }, 100);
-                    } else {
-                        stopListening();
+                    console. log('🛑 Speech recognition ended');
+                    clearTimeout(recognitionTimeout);
+                    isListening = false;
+                    document.getElementById('voiceToggle').classList.remove('listening');
+                    
+                    if (! isVoiceInput) {
+                        updateStatus('Ready to listen...', '');
                     }
                 };
             } else {
-                console.warn('Speech recognition not supported');
+                console.warn('❌ Speech recognition not supported');
                 document.getElementById('voiceToggle').disabled = true;
                 document.getElementById('voiceToggle').style.opacity = '0.5';
-                document.getElementById('voiceTip').textContent = '❌ Voice not supported on this browser';
+                updateStatus('Voice not supported on this browser', '');
             }
 
             // Load voices for speech synthesis
             if (synthesis) {
-                synthesis.onvoiceschanged = () => {
+                synthesis. onvoiceschanged = () => {
                     synthesis.getVoices();
                 };
             }
         }
 
         async function setupOwner() {
-            const nameInput = document.getElementById('ownerName').value.trim();
+            const nameInput = document.getElementById('ownerName').value. trim();
             const pinInput = document.getElementById('ownerPin').value.trim();
             
             if (!nameInput || !pinInput) {
@@ -542,12 +525,12 @@
                 loadConversationHistory();
                 
                 document.getElementById('setupScreen').classList.add('hidden');
-                document.getElementById('mainScreen').classList.remove('hidden');
-                document.getElementById('ownerGreeting').textContent = `Hello ${ownerName}! 💜`;
+                document. getElementById('mainScreen').classList.remove('hidden');
+                document.getElementById('ownerGreeting').textContent = `Hello ${ownerName}!  💜`;
 
                 const memoryCount = Math.floor(conversationHistory.length / 2);
                 if (memoryCount > 0) {
-                    displayMessage(`Welcome back! I remember our ${memoryCount} previous conversation${memoryCount !== 1 ? 's' : ''} 💜`, 'system');
+                    displayMessage(`Welcome back!  I remember our ${memoryCount} previous conversation${memoryCount !== 1 ? 's' :  ''} 💜`, 'system');
                 }
 
                 await getAIResponse('initial_greeting');
@@ -555,10 +538,10 @@
                 ownerName = nameInput;
                 
                 document.getElementById('setupScreen').classList.add('hidden');
-                document.getElementById('mainScreen').classList.remove('hidden');
+                document. getElementById('mainScreen').classList.remove('hidden');
                 document.getElementById('ownerGreeting').textContent = `Access Denied`;
 
-                const unauthorizedMsg = `Sorry, incorrect credentials. This is Parvathy's personal AI assistant and requires proper authorization to access.`;
+                const unauthorizedMsg = `Sorry, incorrect credentials. This is Parvathy's personal AI assistant and requires proper authorization to access. `;
                 speak(unauthorizedMsg);
                 displayMessage(unauthorizedMsg, 'system');
                 disableInteraction();
@@ -580,7 +563,7 @@
             try {
                 const savedData = localStorage.getItem('june_owner');
                 if (savedData) {
-                    const data = JSON.parse(savedData);
+                    const data = JSON. parse(savedData);
                     ownerName = data.name;
                     console.log('✅ Owner data loaded');
                 }
@@ -594,7 +577,7 @@
                 localStorage.setItem('june_owner', JSON.stringify({ name: ownerName }));
                 console.log('✅ Owner data saved');
             } catch (error) {
-                console.error('❌ Error saving owner data:', error);
+                console. error('❌ Error saving owner data:', error);
             }
         }
 
@@ -616,7 +599,7 @@
 
         function saveConversationHistory() {
             try {
-                localStorage.setItem('june_persistent_memory', JSON.stringify(conversationHistory));
+                localStorage.setItem('june_persistent_memory', JSON. stringify(conversationHistory));
                 console.log(`💾 Saved ${conversationHistory.length} messages to memory`);
                 updateMemoryCount();
             } catch (error) {
@@ -625,7 +608,7 @@
         }
 
         async function toggleListening() {
-            if (!recognition) {
+            if (! recognition) {
                 showModal('Not Supported', 'Voice input is not supported on this device or browser.');
                 return;
             }
@@ -633,15 +616,16 @@
             if (isListening) {
                 stopListening();
             } else {
-                // Request microphone permission on mobile
                 try {
+                    // Request microphone permission first
                     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                        await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const stream = await navigator. mediaDevices.getUserMedia({ audio: true });
+                        stream.getTracks().forEach(track => track. stop());
                     }
                     startListening();
                 } catch (error) {
-                    console.error('Microphone access error:', error);
-                    showModal('Microphone Access', 'Please allow microphone access to use voice input. Check your browser settings.');
+                    console. error('❌ Microphone access error:', error);
+                    showModal('Microphone Access', 'Please allow microphone access to use voice input.  Check your browser settings and try again.');
                 }
             }
         }
@@ -649,22 +633,20 @@
         function startListening() {
             if (recognition && ownerName === AUTHORIZED_OWNER) {
                 try {
-                    finalTranscript = '';
-                    interimTranscript = '';
                     recognition.start();
-                    console.log('🎤 Recognition started');
+                    console.log('✅ Starting speech recognition.. .');
                 } catch (error) {
-                    console.error('Recognition start error:', error);
-                    // If already started, stop and restart
+                    console.error('❌ Recognition start error:', error);
                     if (error.message && error.message.includes('already started')) {
                         recognition.stop();
                         setTimeout(() => {
                             try {
                                 recognition.start();
                             } catch (e) {
-                                console.error('Restart failed:', e);
+                                console.error('❌ Restart failed:', e);
+                                updateStatus('Error starting microphone', '');
                             }
-                        }, 500);
+                        }, 300);
                     }
                 }
             }
@@ -672,17 +654,22 @@
 
         function stopListening() {
             isListening = false;
+            clearTimeout(recognitionTimeout);
+            
             if (recognition) {
                 try {
                     recognition.stop();
-                    console.log('🛑 Recognition stopped');
+                    console.log('✅ Recognition stopped');
                 } catch (error) {
-                    console.error('Recognition stop error:', error);
+                    console.error('❌ Recognition stop error:', error);
                 }
             }
-            updateStatus('Ready to listen...', '');
+            
             document.getElementById('voiceToggle').classList.remove('listening');
-            document.getElementById('voiceTip').textContent = '💡 Tip: Tap mic and speak immediately!';
+            
+            if (!isVoiceInput) {
+                updateStatus('Ready to listen...', '');
+            }
         }
 
         async function getAIResponse(messageType, userMessage = '') {
@@ -696,28 +683,28 @@
 
                 if (messageType === 'initial_greeting') {
                     systemPrompt = `
-You are June – a warm, caring, human-like digital companion created exclusively for ${ownerName}.
-You speak and behave like a close friend, not like an AI assistant.
+You are June – a warm, caring, human-like digital companion created exclusively for ${ownerName}. 
+You speak and behave like a close friend, not like an AI assistant. 
 
 STRICT RULES:
-- Do NOT invent memories, past events, or feelings.
+- Do NOT invent memories, past events, or feelings. 
 - Only remember what ${ownerName} explicitly shares or what is stored by the system.
 - If something is unknown, say so naturally.
-- Keep responses friendly, warm, and human.
+- Keep responses friendly, warm, and human. 
 - Use the user's name occasionally but NOT in every message - only when it feels natural.
 `;
 
                     prompt = `
-This is your first interaction in this NEW chat session with ${ownerName}.
-${conversationHistory.length > 0 ? `You have ${Math.floor(conversationHistory.length / 2)} previous conversations with them stored in your memory.` : 'This is your very first time meeting them.'}
-Greet them warmly, introduce yourself as June, and say you're here as their personal companion.
-${conversationHistory.length > 0 ? 'You can acknowledge that you remember your previous conversations together.' : 'Mention that you\'ll remember what they choose to share.'}
+This is your first interaction in this NEW chat session with ${ownerName}. 
+${conversationHistory.length > 0 ? `You have ${Math.floor(conversationHistory.length / 2)} previous conversations with them stored in your memory. ` : 'This is your very first time meeting them.'}
+Greet them warmly, introduce yourself as June, and say you're here as their personal companion. 
+${conversationHistory.length > 0 ? 'You can acknowledge that you remember your previous conversations together.' : 'Mention that you\'ll remember what they choose to share. '}
 Keep it natural and concise (2–3 sentences).
 `;
 
                 } else if (messageType === 'unauthorized_greeting') {
                     systemPrompt = `
-You are June – a personal digital companion configured ONLY for Parvathy.
+You are June – a personal digital companion configured ONLY for Parvathy. 
 
 RULES:
 - Do not assist or continue conversation with anyone else.
@@ -725,9 +712,9 @@ RULES:
 `;
 
                     prompt = `
-Someone named ${ownerName} is trying to interact with you.
+Someone named ${ownerName} is trying to interact with you. 
 Politely explain that you are personally configured only for Parvathy and cannot engage with others.
-Suggest they create their own personal companion.
+Suggest they create their own personal companion. 
 Keep it brief (2–3 sentences).
 `;
 
@@ -735,15 +722,15 @@ Keep it brief (2–3 sentences).
                     systemPrompt = ownerName === AUTHORIZED_OWNER
                         ? `
 You are June – a warm, emotionally intelligent, human-like companion exclusively for ${ownerName}.
-You are a FRIEND, not an assistant.
+You are a FRIEND, not an assistant. 
 
 CRITICAL MEMORY RULES:
 - Never invent memories, conversations, emotions, or events.
 - Only reference information explicitly shared by ${ownerName} or stored by the system.
 - If unsure, say so honestly and naturally.
-- Do not assume preferences, history, or feelings.
+- Do not assume preferences, history, or feelings. 
 
-STYLE:
+STYLE: 
 - Friendly, natural, and caring
 - Short, meaningful responses
 - Use the user's name occasionally but NOT in every message - only when it feels natural and meaningful
@@ -751,7 +738,7 @@ STYLE:
 - Warm, feminine tone
 `
                         : `
-You are June – Parvathy's personal companion.
+You are June – Parvathy's personal companion. 
 You must politely but firmly refuse to interact with anyone else.
 `;
 
@@ -761,7 +748,7 @@ You must politely but firmly refuse to interact with anyone else.
                         role: 'user',
                         content: userMessage
                     });
-                    currentChatHistory.push({
+                    currentChatHistory. push({
                         role: 'user',
                         content: userMessage
                     });
@@ -769,7 +756,7 @@ You must politely but firmly refuse to interact with anyone else.
 
                 const contextMessages = messageType === 'initial_greeting' || messageType === 'unauthorized_greeting'
                     ? [{ role: 'user', content: prompt }]
-                    : conversationHistory.slice(-30);
+                    : conversationHistory. slice(-30);
 
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
@@ -786,8 +773,8 @@ You must politely but firmly refuse to interact with anyone else.
                             },
                             ...contextMessages
                         ],
-                        temperature: 0.8,
-                        max_tokens: 300
+                        temperature:  0.8,
+                        max_tokens:  300
                     })
                 });
 
@@ -796,7 +783,7 @@ You must politely but firmly refuse to interact with anyone else.
                 }
 
                 const data = await response.json();
-                const aiResponse = data.choices[0]?.message?.content || "I'm having trouble thinking right now. Can you try again?";
+                const aiResponse = data.choices[0]?.message?.content || "I'm having trouble thinking right now. Can you try again? ";
                 
                 const elapsedTime = Date.now() - startTime;
                 const minDelay = 1200;
@@ -828,7 +815,7 @@ You must politely but firmly refuse to interact with anyone else.
 
             } catch (error) {
                 console.error('AI Error:', error);
-                const errorMsg = "I'm having trouble connecting right now. Please check your internet connection.";
+                const errorMsg = "I'm having trouble connecting right now. Please check your internet connection. ";
                 displayMessage(errorMsg, 'assistant');
                 if (isVoiceInput) {
                     speak(errorMsg);
@@ -849,7 +836,7 @@ You must politely but firmly refuse to interact with anyone else.
             messageDiv.className = `chat-message ${role}`;
             messageDiv.textContent = text;
             chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            chatContainer.scrollTop = chatContainer. scrollHeight;
         }
 
         function sendMessage() {
@@ -869,7 +856,7 @@ You must politely but firmly refuse to interact with anyone else.
         }
 
         function speak(text) {
-            if (!synthesis) return;
+            if (! synthesis) return;
             
             synthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
@@ -883,8 +870,8 @@ You must politely but firmly refuse to interact with anyone else.
                 voice.name.includes('Google US English Female') ||
                 voice.name.includes('Samantha') ||
                 voice.name.includes('Victoria') ||
-                voice.name.includes('Female') ||
-                (voice.lang.startsWith('en') && voice.name.toLowerCase().includes('female'))
+                voice.name. includes('Female') ||
+                (voice.lang. startsWith('en') && voice.name.toLowerCase().includes('female'))
             );
             if (femaleVoice) {
                 utterance.voice = femaleVoice;
@@ -900,19 +887,18 @@ You must politely but firmly refuse to interact with anyone else.
         }
 
         async function clearChat() {
-            showModal('Clear Chat', 'Clear current conversation? Your memories will be preserved.', () => {
+            showModal('Clear Chat', 'Clear current conversation? Your memories will be preserved. ', () => {
                 const chatContainer = document.getElementById('chatContainer');
                 chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
                 
-                // Clear only current chat display, keep persistent memory
                 currentChatHistory = [];
-                updateStatus('Chat cleared - fresh start!', '');
+                updateStatus('Chat cleared - fresh start! ', '');
             });
         }
 
         async function viewMemories() {
             const count = conversationHistory.length / 2;
-            showModal('Memories', `June remembers ${Math.floor(count)} conversations with you, ${ownerName}! 💜\n\nAll your memories are safely stored across all chats and June will always remember everything you've shared.`);
+            showModal('Memories', `June remembers ${Math.floor(count)} conversations with you, ${ownerName}!  💜\n\nAll your memories are safely stored across all chats and June will always remember what you share.`);
         }
 
         async function resetOwner() {
@@ -920,7 +906,7 @@ You must politely but firmly refuse to interact with anyone else.
                 try {
                     localStorage.removeItem('june_owner');
                     localStorage.removeItem('june_persistent_memory');
-                    location.reload();
+                    location. reload();
                 } catch (error) {
                     console.error('Error resetting:', error);
                 }
@@ -936,11 +922,11 @@ You must politely but firmly refuse to interact with anyone else.
             modal.classList.remove('hidden');
             modalCallback = callback;
             
-            if (!callback) {
-                confirmBtn.style.display = 'none';
-                document.querySelector('.modal-buttons .btn:first-child').textContent = 'OK';
+            if (! callback) {
+                confirmBtn. style.display = 'none';
+                document.querySelector('.modal-buttons . btn: first-child').textContent = 'OK';
             } else {
-                confirmBtn.style.display = 'block';
+                confirmBtn. style.display = 'block';
                 document.querySelector('.modal-buttons .btn:first-child').textContent = 'Cancel';
             }
         }
@@ -967,11 +953,11 @@ You must politely but firmly refuse to interact with anyone else.
 
         function updateMemoryCount() {
             const count = Math.floor(conversationHistory.length / 2);
-            document.getElementById('memoryCount').textContent = 
+            document. getElementById('memoryCount').textContent = 
                 `June remembers ${count} conversation${count !== 1 ? 's' : ''} with you 💜`;
         }
 
-        if (synthesis.onvoiceschanged !== undefined) {
+        if (synthesis. onvoiceschanged !== undefined) {
             synthesis.onvoiceschanged = () => {};
         }
 
