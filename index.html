@@ -82,6 +82,30 @@
             animation: pulse 1.5s ease-in-out infinite;
         }
 
+        .live-transcript {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            min-height: 50px;
+            display: none;
+            line-height: 1.5;
+            color: #fff;
+            font-style: italic;
+        }
+
+        .live-transcript.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
@@ -349,6 +373,8 @@
                 Ready to listen...
             </div>
 
+            <div class="live-transcript" id="liveTranscript"></div>
+
             <div class="chat-container" id="chatContainer">
                 <div class="chat-message system">Tap the microphone or type below to talk with June</div>
             </div>
@@ -425,7 +451,7 @@
                 
                 // MOBILE OPTIMIZED SETTINGS
                 recognition.continuous = false;
-                recognition.interimResults = false;
+                recognition.interimResults = true;
                 recognition.lang = 'en-US';
                 recognition.maxAlternatives = 1;
 
@@ -435,6 +461,11 @@
                     isVoiceInput = true;
                     updateStatus('🎤 Listening... Speak now!', 'listening');
                     document.getElementById('voiceToggle').classList.add('listening');
+                    
+                    // Show live transcript area
+                    const transcriptDiv = document.getElementById('liveTranscript');
+                    transcriptDiv.textContent = 'Listening...';
+                    transcriptDiv.classList.add('active');
                     
                     // Auto-stop after 10 seconds
                     recognitionTimeout = setTimeout(() => {
@@ -447,24 +478,43 @@
                 };
 
                 recognition.onresult = (event) => {
-                    clearTimeout(recognitionTimeout);
+                    const transcriptDiv = document.getElementById('liveTranscript');
                     
-                    const transcript = event.results[0][0].transcript;
-                    console.log('📝 Captured:', transcript);
-                    
-                    if (transcript && transcript.trim()) {
-                        handleUserInput(transcript.trim());
-                    } else {
-                        updateStatus('No speech detected. Try again!', '');
-                        isVoiceInput = false;
+                    // Show interim results (live as you speak)
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        
+                        if (event.results[i].isFinal) {
+                            clearTimeout(recognitionTimeout);
+                            console.log('📝 Final capture:', transcript);
+                            
+                            transcriptDiv.textContent = `"${transcript}"`;
+                            
+                            if (transcript && transcript.trim()) {
+                                setTimeout(() => {
+                                    handleUserInput(transcript.trim());
+                                    transcriptDiv.classList.remove('active');
+                                }, 500);
+                            } else {
+                                updateStatus('No speech detected. Try again!', '');
+                                isVoiceInput = false;
+                                transcriptDiv.classList.remove('active');
+                            }
+                            
+                            stopListening();
+                        } else {
+                            // Show live interim results
+                            transcriptDiv.textContent = `"${transcript}..."`;
+                        }
                     }
-                    
-                    stopListening();
                 };
 
                 recognition.onerror = (event) => {
                     console.error('❌ Speech error:', event.error);
                     clearTimeout(recognitionTimeout);
+                    
+                    const transcriptDiv = document.getElementById('liveTranscript');
+                    transcriptDiv.classList.remove('active');
                     
                     let errorMsg = '';
                     
