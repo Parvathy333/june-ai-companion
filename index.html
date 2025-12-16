@@ -413,6 +413,7 @@
 
         // State
         let isListening = false;
+        let recognitionTimeout = null;
         let recognition = null;
         let ownerName = '';
         let conversationHistory = [];
@@ -438,7 +439,7 @@
                 recognition = new SpeechRecognition();
                 
                 // MOBILE OPTIMIZED SETTINGS
-                recognition.continuous = true;  // Changed to true for better mobile capture
+                recognition.continuous = false;  // Changed to true for better mobile capture
                 recognition.interimResults = true;  // Changed to true to show what's being said
                 recognition.lang = 'en-US';
                 recognition.maxAlternatives = 1;
@@ -451,6 +452,12 @@
                     updateStatus('🎤 Listening... Speak now!', 'listening');
                     document.getElementById('voiceToggle').classList.add('listening');
                     document.getElementById('voiceTip').textContent = '🗣️ Speak clearly... I\'m listening!';
+                    recognitionTimeout = setTimeout(() => {
+        if (isListening) {
+            console.log('⏱️ Recognition timeout - stopping');
+            stopListening();
+        }
+    }, 10000);
                 };
 
                 recognition.onresult = (event) => {
@@ -474,7 +481,7 @@
 
                 recognition.onerror = (event) => {
                     console.error('Speech recognition error:', event.error);
-                    
+                    clearTimeout(recognitionTimeout);
                     if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
                         updateStatus('⚠️ Microphone permission denied', 'active');
                         showModal('Microphone Access', 'Please allow microphone access in your browser settings to use voice input.');
@@ -494,6 +501,8 @@
 
                 recognition.onend = () => {
                     // Process the captured speech
+                    console.log('🛑 Recognition ended');
+    clearTimeout(recognitionTimeout);
                     if (finalTranscript.trim()) {
                         handleUserInput(finalTranscript.trim());
                         finalTranscript = '';
@@ -689,6 +698,7 @@
 
         function stopListening() {
             isListening = false;
+            clearTimeout(recognitionTimeout); 
             if (recognition) {
                 try {
                     recognition.stop();
@@ -999,3 +1009,4 @@ You must politely but firmly refuse to interact with anyone else.
     </script>
 </body>
 </html>
+
