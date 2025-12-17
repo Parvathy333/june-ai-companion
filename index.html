@@ -468,8 +468,7 @@
     <script>
         const AUTHORIZED_OWNER = 'Parvathy';
         const OWNER_PIN = '1234';
-        const API_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
-        const API_KEY = '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';
+        const API_ENDPOINT = 'https://june-api-proxy.parvathyunnikrishnan1234.workers.dev';
         const MODEL = 'llama-3.3-70b-versatile';
 
         let isListening = false;
@@ -812,8 +811,7 @@ STYLE:
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${API_KEY}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         model: MODEL,
@@ -1045,4 +1043,3 @@ STYLE:
     </script>
 </body>
 </html>
-
