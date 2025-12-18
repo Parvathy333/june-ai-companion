@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="June">
     <meta name="theme-color" content="#667eea">
+    <!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="icon1.png">
+<link rel="icon" type="image/png" href="icon1.png">
     <title>June - Your AI Companion</title>
     <style>
         * {
@@ -232,6 +236,14 @@
             transform: scale(0.95);
         }
 
+        .btn.danger {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn.danger:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         .setup-screen {
             text-align: center;
         }
@@ -443,6 +455,7 @@
 
             <div class="controls">
                 <button class="btn" onclick="clearChat()">Clear Chat</button>
+                <button class="btn danger" onclick="clearMemory()">Clear Memory</button>
                 <button class="btn" onclick="viewMemories()">Memories</button>
                 <button class="btn" onclick="logout()">Logout</button>
             </div>
@@ -466,7 +479,7 @@
     <script>
         const API_ENDPOINT = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001' 
-            : 'https://june-ai-sigma.vercel.app';
+            : window.location.origin;
         
         console.log('🌐 API Endpoint:', API_ENDPOINT);
         
@@ -483,7 +496,6 @@
 
         function init() {
             console.log('🚀 Initializing June...');
-            // No auto-login - removed checkAuth()
             
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
@@ -620,8 +632,6 @@
                 authToken = data.token;
                 ownerName = data.user.name;
                 
-                // NO localStorage saving - session only!
-                
                 await loadConversations();
                 showMainScreen();
             } catch (error) {
@@ -747,7 +757,6 @@
                     conversationHistory.push({ role: 'assistant', content: aiResponse });
                     updateMemoryCount();
                     
-                    // ✅ Save to server
                     try {
                         await fetch(`${API_ENDPOINT}/api/conversations`, {
                             method: 'POST',
@@ -862,6 +871,54 @@
                 updateStatus('Chat cleared! Your memories are safe 💜', '');
                 console.log('✅ Chat display cleared (memories preserved on server)');
             });
+        }
+
+        async function clearMemory() {
+            const count = Math.floor(conversationHistory.length / 2);
+            
+            if (count === 0) {
+                showModal('No Memories', 'You have no stored memories to clear! 💜');
+                return;
+            }
+            
+            showModal(
+                '⚠️ Delete All Memories?', 
+                `This will permanently delete ALL ${count} stored conversation${count !== 1 ? 's' : ''} from the server.\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?`, 
+                async () => {
+                    try {
+                        updateStatus('Deleting all memories...', 'active');
+                        
+                        const response = await fetch(`${API_ENDPOINT}/api/conversations`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to delete memories');
+                        }
+
+                        const data = await response.json();
+                        console.log(`🗑️ Deleted ${data.deleted} messages from server`);
+                        
+                        conversationHistory = [];
+                        updateMemoryCount();
+                        
+                        const chatContainer = document.getElementById('chatContainer');
+                        chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
+                        
+                        updateStatus('All memories deleted successfully! Starting fresh 💜', '');
+                        
+                        showModal('✅ Memories Cleared', `All ${data.deleted} messages have been permanently deleted from the server.\n\nJune has forgotten everything and you're starting fresh! 💜`);
+                        
+                    } catch (error) {
+                        console.error('❌ Clear memory error:', error);
+                        updateStatus('Failed to delete memories', '');
+                        showModal('Error', 'Failed to delete memories from server. Please try again.');
+                    }
+                }
+            );
         }
 
         function viewMemories() {
