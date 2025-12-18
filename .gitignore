@@ -1,0 +1,37 @@
+# Vercel
+.vercel
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables (IMPORTANT!)
+.env
+.env.local
+.env.production
+.env.development
+backend/.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Temporary files
+*.tmp
+*.temp
+~*

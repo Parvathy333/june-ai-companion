@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="June">
+    <meta name="theme-color" content="#667eea">
+    <title>June - Your AI Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        html {
+            height: -webkit-fill-available;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #a8edea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .status {
+            text-align: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status.active {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .status.listening {
+            background: rgba(33, 150, 243, 0.3);
+            animation: pulse 1.5s ease-in-out infinite;
+            font-size: 0.95rem;
+            font-style: italic;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            max-height: 40vh;
+            overflow-y: auto;
+            margin: 15px 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .chat-message {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .chat-message.user {
+            background: rgba(102, 126, 234, 0.3);
+            margin-left: 20px;
+            text-align: right;
+        }
+
+        .chat-message.assistant {
+            background: rgba(255, 255, 255, 0.2);
+            margin-right: 20px;
+        }
+
+        .chat-message.system {
+            background: rgba(244, 67, 54, 0.3);
+            text-align: center;
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .input-area input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .input-area button {
+            padding: 12px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .input-area button:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .input-area button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .input-area button.listening {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: listening-pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes listening-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+        }
+
+        .setup-screen {
+            text-align: center;
+        }
+
+        .setup-screen input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+            margin: 10px 0;
+            outline: none;
+        }
+
+        .setup-screen input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .setup-screen input[type="password"] {
+            letter-spacing: 3px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .memory-count {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 20px;
+            max-width: 350px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+            white-space: pre-line;
+            min-height: 40px;
+            font-size: 0.9rem;
+        }
+        
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .modal-buttons .btn {
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            min-width: 100px;
+        }
+
+        .memory-list {
+            max-height: 50vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 5px;
+        }
+
+        .memory-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .memory-list::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+
+        .memory-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .memory-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .memory-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            text-align: left;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .memory-item.user {
+            background: rgba(102, 126, 234, 0.4);
+            margin-left: 20px;
+            border-left: 3px solid rgba(102, 126, 234, 0.8);
+        }
+
+        .memory-item.assistant {
+            background: rgba(255, 255, 255, 0.25);
+            margin-right: 20px;
+            border-left: 3px solid rgba(255, 255, 255, 0.5);
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .btn {
+                padding: 8px 15px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div id="setupScreen" class="setup-screen">
+            <div class="header">
+                <h1>👋 Hello!</h1>
+                <p>I'm June, your personal AI companion</p>
+            </div>
+            <p style="margin-bottom: 20px;">Please enter your name and PIN to access June.</p>
+            <input type="text" id="ownerName" placeholder="Enter your name" autocomplete="off" />
+            <input type="password" id="ownerPin" placeholder="Enter your pin" autocomplete="off" />
+            <button class="btn" onclick="setupOwner()" style="width: 100%;">Start Journey with June</button>
+        </div>
+
+        <div id="mainScreen" class="hidden">
+            <div class="header">
+                <h1>🌸 June</h1>
+                <p id="ownerGreeting">Your personal AI companion</p>
+            </div>
+
+            <div class="status" id="status">Ready to listen...</div>
+
+            <div class="chat-container" id="chatContainer">
+                <div class="chat-message system">Tap the microphone or type below to talk with June</div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type your message here..." onkeypress="handleKeyPress(event)" />
+                <button onclick="sendMessage()" id="sendBtn" aria-label="Send message">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+                <button onclick="toggleListening()" id="voiceToggle" aria-label="Voice input">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+            </div>
+
+            <div class="controls">
+                <button class="btn" onclick="clearChat()">Clear Chat</button>
+                <button class="btn" onclick="viewMemories()">Memories</button>
+                <button class="btn" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="memory-count" id="memoryCount"></div>
+        </div>
+
+        <div id="modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="modalTitle">Confirmation</h3>
+                <p id="modalMessage"></p>
+                <div id="modalMemoryList" class="memory-list hidden"></div>
+                <div class="modal-buttons">
+                    <button class="btn" onclick="closeModal()">Cancel</button>
+                    <button class="btn" id="modalConfirm" onclick="confirmModal()">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3001' 
+            : 'https://june-ai-sigma.vercel.app';
+        
+        console.log('🌐 API Endpoint:', API_ENDPOINT);
+        
+        let isListening = false;
+        let recognition = null;
+        let ownerName = '';
+        let authToken = '';
+        let conversationHistory = [];
+        let currentChatHistory = [];
+        let synthesis = window.speechSynthesis;
+        let modalCallback = null;
+        let isVoiceInput = false;
+        let recognitionTimeout = null;
+
+        function init() {
+            console.log('🚀 Initializing June...');
+            // No auto-login - removed checkAuth()
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = () => {
+                    isListening = true;
+                    isVoiceInput = true;
+                    updateStatus('🎤 Listening... Speak now!', 'listening');
+                    document.getElementById('voiceToggle').classList.add('listening');
+                    
+                    recognitionTimeout = setTimeout(() => {
+                        if (isListening) {
+                            stopListening();
+                            updateStatus('Timeout - try again!', '');
+                        }
+                    }, 20000);
+                };
+
+                recognition.onresult = (event) => {
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        
+                        if (event.results[i].isFinal) {
+                            clearTimeout(recognitionTimeout);
+                            updateStatus(`"${transcript}"`, 'listening');
+                            
+                            if (transcript && transcript.trim()) {
+                                setTimeout(() => {
+                                    handleUserInput(transcript.trim());
+                                }, 500);
+                            } else {
+                                updateStatus('No speech detected. Try again!', '');
+                                isVoiceInput = false;
+                            }
+                            
+                            stopListening();
+                        } else {
+                            updateStatus(`"${transcript}..."`, 'listening');
+                        }
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    clearTimeout(recognitionTimeout);
+                    let errorMsg = '';
+                    
+                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                        errorMsg = '⚠️ Microphone permission denied';
+                        showModal('Microphone Access', 'Please allow microphone access in your browser settings to use voice input.');
+                    } else if (event.error === 'no-speech') {
+                        errorMsg = 'No speech detected. Try again!';
+                    } else if (event.error === 'aborted') {
+                        errorMsg = 'Ready to listen...';
+                    } else {
+                        errorMsg = `Microphone error: ${event.error}`;
+                    }
+                    
+                    updateStatus(errorMsg, '');
+                    isVoiceInput = false;
+                    stopListening();
+                };
+
+                recognition.onend = () => {
+                    clearTimeout(recognitionTimeout);
+                    isListening = false;
+                    document.getElementById('voiceToggle').classList.remove('listening');
+                    
+                    if (!isVoiceInput) {
+                        updateStatus('Ready to listen...', '');
+                    }
+                };
+            }
+
+            if (synthesis) {
+                synthesis.onvoiceschanged = () => {
+                    synthesis.getVoices();
+                };
+            }
+        }
+
+        async function setupOwner() {
+            const nameInput = document.getElementById('ownerName').value.trim();
+            const pinInput = document.getElementById('ownerPin').value.trim();
+            
+            console.log('🔐 Attempting login:', { name: nameInput, pin: pinInput ? '****' : 'empty' });
+            
+            if (!nameInput || !pinInput) {
+                showModal('Required', 'Please enter both your name and PIN to continue.');
+                return;
+            }
+
+            try {
+                console.log('📡 Sending login request to:', `${API_ENDPOINT}/api/auth/login`);
+                
+                const response = await fetch(`${API_ENDPOINT}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: nameInput,
+                        pin: pinInput
+                    })
+                });
+
+                console.log('📥 Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Login failed:', errorText);
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        showModal('Access Denied', errorData.error || 'Invalid credentials');
+                    } catch (e) {
+                        showModal('Error', 'Server error. Please try again.');
+                    }
+                    
+                    setTimeout(() => {
+                        document.getElementById('ownerPin').value = '';
+                    }, 2000);
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('✅ Login successful!');
+
+                authToken = data.token;
+                ownerName = data.user.name;
+                
+                // NO localStorage saving - session only!
+                
+                await loadConversations();
+                showMainScreen();
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                showModal('Error', 'Could not connect to server. Please check your connection and try again.');
+            }
+        }
+
+        function showMainScreen() {
+            console.log('✅ Showing main screen');
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('mainScreen').classList.remove('hidden');
+            document.getElementById('ownerGreeting').textContent = `Hello ${ownerName}! 💜`;
+        }
+
+        async function loadConversations() {
+            try {
+                console.log('📡 Loading conversations...');
+                const response = await fetch(`${API_ENDPOINT}/api/conversations`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    conversationHistory = data.history;
+                    updateMemoryCount();
+                    console.log(`✅ Loaded ${data.count} conversations`);
+                    
+                    if (data.count > 0) {
+                        displayMessage(`Welcome back! I remember our ${data.count} previous conversation${data.count !== 1 ? 's' : ''} 💜`, 'system');
+                    }
+                    
+                    await getAIResponse('initial_greeting');
+                }
+            } catch (error) {
+                console.error('❌ Load conversations error:', error);
+            }
+        }
+
+        async function toggleListening() {
+            if (!recognition) {
+                showModal('Not Supported', 'Voice input is not supported on this device or browser.');
+                return;
+            }
+
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        }
+
+        function startListening() {
+            if (recognition) {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Recognition start error:', error);
+                }
+            }
+        }
+
+        function stopListening() {
+            isListening = false;
+            clearTimeout(recognitionTimeout);
+            
+            if (recognition) {
+                try {
+                    recognition.stop();
+                } catch (error) {
+                    console.error('Recognition stop error:', error);
+                }
+            }
+            
+            document.getElementById('voiceToggle').classList.remove('listening');
+            
+            if (!isVoiceInput) {
+                updateStatus('Ready to listen...', '');
+            }
+        }
+
+        async function getAIResponse(messageType, userMessage = '') {
+            updateStatus('June is thinking...', 'active');
+            const startTime = Date.now();
+
+            try {
+                const messages = messageType === 'initial_greeting'
+                    ? [{ role: 'user', content: `${ownerName} just opened the app. Greet them warmly but casually.` }]
+                    : [{ role: 'user', content: userMessage }];
+
+                console.log('📡 Sending AI request...');
+                
+                const response = await fetch(`${API_ENDPOINT}/api/ai/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        messages,
+                        messageType
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('AI service error');
+                }
+
+                const data = await response.json();
+                const aiResponse = data.response;
+                
+                console.log('✅ AI response received');
+                
+                const elapsedTime = Date.now() - startTime;
+                if (elapsedTime < 1200) {
+                    await new Promise(resolve => setTimeout(resolve, 1200 - elapsedTime));
+                }
+                
+                if (messageType !== 'initial_greeting') {
+                    conversationHistory.push({ role: 'user', content: userMessage });
+                    conversationHistory.push({ role: 'assistant', content: aiResponse });
+                    updateMemoryCount();
+                    
+                    // ✅ Save to server
+                    try {
+                        await fetch(`${API_ENDPOINT}/api/conversations`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${authToken}`
+                            },
+                            body: JSON.stringify({ role: 'user', content: userMessage })
+                        });
+                        
+                        await fetch(`${API_ENDPOINT}/api/conversations`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${authToken}`
+                            },
+                            body: JSON.stringify({ role: 'assistant', content: aiResponse })
+                        });
+                        
+                        console.log('💾 Conversations saved to server');
+                    } catch (error) {
+                        console.error('❌ Failed to save to server:', error);
+                    }
+                }
+                
+                displayMessage(aiResponse, 'assistant');
+                
+                if (isVoiceInput) {
+                    speak(aiResponse);
+                }
+                
+                isVoiceInput = false;
+                updateStatus('Ready to listen...', '');
+
+            } catch (error) {
+                console.error('❌ AI Error:', error);
+                const errorMsg = "I'm having trouble connecting. Please try again.";
+                displayMessage(errorMsg, 'assistant');
+                
+                if (isVoiceInput) {
+                    speak(errorMsg);
+                }
+                
+                isVoiceInput = false;
+                updateStatus('Ready to listen...', '');
+            }
+        }
+
+        async function handleUserInput(userMessage) {
+            displayMessage(userMessage, 'user');
+            await getAIResponse('conversation', userMessage);
+        }
+
+        function displayMessage(text, role) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${role}`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (message) {
+                isVoiceInput = false;
+                handleUserInput(message);
+                input.value = '';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function speak(text) {
+            if (!synthesis) return;
+            
+            synthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.95;
+            utterance.pitch = 1.2;
+            utterance.volume = 1.0;
+            
+            const voices = synthesis.getVoices();
+            const femaleVoice = voices.find(voice => 
+                voice.name.includes('Google UK English Female') ||
+                voice.name.includes('Samantha') ||
+                voice.name.includes('Female')
+            );
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            }
+            
+            synthesis.speak(utterance);
+        }
+
+        function updateStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+        }
+
+        function clearChat() {
+            showModal('Clear Chat', 'Clear the current chat display? Your memories will be preserved on the server.', () => {
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
+                currentChatHistory = [];
+                updateStatus('Chat cleared! Your memories are safe 💜', '');
+                console.log('✅ Chat display cleared (memories preserved on server)');
+            });
+        }
+
+        function viewMemories() {
+            const count = conversationHistory.length / 2;
+            const memoryListDiv = document.getElementById('modalMemoryList');
+            const modalMessage = document.getElementById('modalMessage');
+            
+            if (conversationHistory.length === 0) {
+                showModal('Memories', `No memories yet! Start chatting with June to build your memories together 💜`);
+                return;
+            }
+            
+            let memoryHTML = '';
+            for (let i = 0; i < conversationHistory.length; i++) {
+                const msg = conversationHistory[i];
+                const roleClass = msg.role === 'user' ? 'user' : 'assistant';
+                memoryHTML += `<div class="memory-item ${roleClass}">${msg.content}</div>`;
+            }
+            
+            memoryListDiv.innerHTML = memoryHTML;
+            memoryListDiv.classList.remove('hidden');
+            modalMessage.textContent = `June remembers ${Math.floor(count)} conversations with you, ${ownerName}! 💜\n\nAll your memories are safely stored and June will always remember them.`;
+            
+            document.getElementById('modalTitle').textContent = 'Memories';
+            const modal = document.getElementById('modal');
+            const confirmBtn = document.getElementById('modalConfirm');
+            
+            modal.classList.remove('hidden');
+            confirmBtn.style.display = 'none';
+            document.querySelector('.modal-buttons .btn:first-child').textContent = 'Close';
+            
+            modalCallback = null;
+        }
+
+        function logout() {
+            showModal('Logout', 'Are you sure you want to logout? (Your memories are saved on the server)', () => {
+                authToken = '';
+                ownerName = '';
+                conversationHistory = [];
+                currentChatHistory = [];
+                document.getElementById('setupScreen').classList.remove('hidden');
+                document.getElementById('mainScreen').classList.add('hidden');
+                document.getElementById('ownerName').value = '';
+                document.getElementById('ownerPin').value = '';
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
+            });
+        }
+
+        function showModal(title, message, callback = null) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('modalMemoryList').classList.add('hidden');
+            const modal = document.getElementById('modal');
+            const confirmBtn = document.getElementById('modalConfirm');
+            
+            modal.classList.remove('hidden');
+            modalCallback = callback;
+            
+            if (!callback) {
+                confirmBtn.style.display = 'none';
+                document.querySelector('.modal-buttons .btn:first-child').textContent = 'OK';
+            } else {
+                confirmBtn.style.display = 'block';
+                document.querySelector('.modal-buttons .btn:first-child').textContent = 'Cancel';
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+            document.getElementById('modalMemoryList').classList.add('hidden');
+            modalCallback = null;
+        }
+
+        function confirmModal() {
+            if (modalCallback) {
+                modalCallback();
+            }
+            closeModal();
+        }
+        
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('modal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        function updateMemoryCount() {
+            const count = Math.floor(conversationHistory.length / 2);
+            document.getElementById('memoryCount').textContent = 
+                `June remembers ${count} conversation${count !== 1 ? 's' : ''} with you 💜`;
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
