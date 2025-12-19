@@ -8,9 +8,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="June">
     <meta name="theme-color" content="#667eea">
-    <!-- Apple Touch Icon -->
-<link rel="apple-touch-icon" href="icon1.png">
-<link rel="icon" type="image/png" href="icon1.png">
+    <link rel="apple-touch-icon" href="icon2.png">
+<link rel="icon" type="image/png" href="icon2.png">
     <title>June - Your AI Companion</title>
     <style>
         * {
@@ -488,14 +487,83 @@
         let ownerName = '';
         let authToken = '';
         let conversationHistory = [];
-        let currentChatHistory = [];
         let synthesis = window.speechSynthesis;
         let modalCallback = null;
         let isVoiceInput = false;
         let recognitionTimeout = null;
+        let encryptionKey = ''; // 🔐 Encryption key derived from PIN
+
+        // 💾 LOCAL STORAGE KEYS
+        const STORAGE_KEYS = {
+            TOKEN: 'june_token',
+            NAME: 'june_name',
+            CONVERSATIONS: 'june_conversations_encrypted'
+        };
+
+        // 🔐 ENCRYPTION FUNCTIONS
+        async function deriveEncryptionKey(pin, username) {
+            // Create a unique key from PIN + username
+            const combinedSecret = `${username.toLowerCase()}_${pin}_june_secret_2024`;
+            const encoder = new TextEncoder();
+            const data = encoder.encode(combinedSecret);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function encryptData(text, key) {
+            try {
+                // Simple XOR-based encryption with key stretching
+                let encrypted = '';
+                const keyLength = key.length;
+                for (let i = 0; i < text.length; i++) {
+                    const charCode = text.charCodeAt(i);
+                    const keyChar = key.charCodeAt(i % keyLength);
+                    encrypted += String.fromCharCode(charCode ^ keyChar);
+                }
+                // Convert to base64 for safe storage
+                return btoa(encrypted);
+            } catch (error) {
+                console.error('❌ Encryption error:', error);
+                return text; // Fallback to unencrypted if error
+            }
+        }
+
+        function decryptData(encryptedText, key) {
+            try {
+                // Decode from base64
+                const encrypted = atob(encryptedText);
+                let decrypted = '';
+                const keyLength = key.length;
+                for (let i = 0; i < encrypted.length; i++) {
+                    const charCode = encrypted.charCodeAt(i);
+                    const keyChar = key.charCodeAt(i % keyLength);
+                    decrypted += String.fromCharCode(charCode ^ keyChar);
+                }
+                return decrypted;
+            } catch (error) {
+                console.error('❌ Decryption error:', error);
+                return null; // Return null if decryption fails
+            }
+        }
 
         function init() {
             console.log('🚀 Initializing June...');
+            
+            // ✅ Check for saved token on app load
+            const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            const savedName = localStorage.getItem(STORAGE_KEYS.NAME);
+            
+            if (savedToken && savedName) {
+                console.log('✅ Found saved session, auto-logging in...');
+                authToken = savedToken;
+                ownerName = savedName;
+                
+                // 🔐 Need to re-derive encryption key, but we don't have PIN
+                // Show login screen to get PIN for decryption
+                console.log('🔐 PIN required for decryption - showing login screen');
+                return; // Don't auto-login, need PIN for encryption key
+            }
             
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
@@ -632,7 +700,16 @@
                 authToken = data.token;
                 ownerName = data.user.name;
                 
-                await loadConversations();
+                // 🔐 DERIVE ENCRYPTION KEY FROM PIN
+                encryptionKey = await deriveEncryptionKey(pinInput, nameInput);
+                console.log('🔐 Encryption key generated');
+                
+                // 💾 Save to localStorage
+                localStorage.setItem(STORAGE_KEYS.TOKEN, authToken);
+                localStorage.setItem(STORAGE_KEYS.NAME, ownerName);
+                console.log('💾 Credentials saved to localStorage');
+                
+                loadConversationsFromLocalStorage();
                 showMainScreen();
             } catch (error) {
                 console.error('❌ Login error:', error);
@@ -647,29 +724,52 @@
             document.getElementById('ownerGreeting').textContent = `Hello ${ownerName}! 💜`;
         }
 
-        async function loadConversations() {
+        // 💾 LOAD CONVERSATIONS FROM LOCALSTORAGE
+        function loadConversationsFromLocalStorage() {
             try {
-                console.log('📡 Loading conversations...');
-                const response = await fetch(`${API_ENDPOINT}/api/conversations`, {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
+                console.log('📂 Loading conversations from localStorage...');
+                const saved = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS);
+                
+                if (saved) {
+                    // 🔐 DECRYPT the conversations
+                    const decrypted = decryptData(saved, encryptionKey);
+                    if (decrypted) {
+                        conversationHistory = JSON.parse(decrypted);
+                        console.log(`✅ Loaded and decrypted ${conversationHistory.length} messages from localStorage`);
+                    } else {
+                        console.log('❌ Failed to decrypt - wrong PIN or corrupted data');
+                        conversationHistory = [];
                     }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    conversationHistory = data.history;
-                    updateMemoryCount();
-                    console.log(`✅ Loaded ${data.count} conversations`);
-                    
-                    if (data.count > 0) {
-                        displayMessage(`Welcome back! I remember our ${data.count} previous conversation${data.count !== 1 ? 's' : ''} 💜`, 'system');
-                    }
-                    
-                    await getAIResponse('initial_greeting');
+                } else {
+                    conversationHistory = [];
+                    console.log('📝 No saved conversations found, starting fresh');
                 }
+                
+                updateMemoryCount();
+                
+                // 🔥 ALWAYS START WITH CLEAN CHAT WINDOW
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
+                console.log('✨ Chat window cleared - ready for new conversation!');
+                
+                // Still greet the user (but don't show old messages)
+                getAIResponse('initial_greeting');
             } catch (error) {
                 console.error('❌ Load conversations error:', error);
+                conversationHistory = [];
+            }
+        }
+
+        // 💾 SAVE CONVERSATIONS TO LOCALSTORAGE (ENCRYPTED)
+        function saveConversationsToLocalStorage() {
+            try {
+                const jsonData = JSON.stringify(conversationHistory);
+                // 🔐 ENCRYPT before saving
+                const encrypted = encryptData(jsonData, encryptionKey);
+                localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, encrypted);
+                console.log(`🔐 Encrypted and saved ${conversationHistory.length} messages to localStorage`);
+            } catch (error) {
+                console.error('❌ Save conversations error:', error);
             }
         }
 
@@ -734,7 +834,8 @@
                     },
                     body: JSON.stringify({
                         messages,
-                        messageType
+                        messageType,
+                        conversationHistory // 🔥 SEND LOCALSTORAGE HISTORY TO AI
                     })
                 });
 
@@ -753,33 +854,11 @@
                 }
                 
                 if (messageType !== 'initial_greeting') {
+                    // 💾 SAVE TO LOCALSTORAGE
                     conversationHistory.push({ role: 'user', content: userMessage });
                     conversationHistory.push({ role: 'assistant', content: aiResponse });
+                    saveConversationsToLocalStorage();
                     updateMemoryCount();
-                    
-                    try {
-                        await fetch(`${API_ENDPOINT}/api/conversations`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${authToken}`
-                            },
-                            body: JSON.stringify({ role: 'user', content: userMessage })
-                        });
-                        
-                        await fetch(`${API_ENDPOINT}/api/conversations`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${authToken}`
-                            },
-                            body: JSON.stringify({ role: 'assistant', content: aiResponse })
-                        });
-                        
-                        console.log('💾 Conversations saved to server');
-                    } catch (error) {
-                        console.error('❌ Failed to save to server:', error);
-                    }
                 }
                 
                 displayMessage(aiResponse, 'assistant');
@@ -864,16 +943,15 @@
         }
 
         function clearChat() {
-            showModal('Clear Chat', 'Clear the current chat display? Your memories will be preserved on the server.', () => {
+            showModal('Clear Chat', 'Clear the current chat display? Your memories will still be preserved in localStorage.', () => {
                 const chatContainer = document.getElementById('chatContainer');
                 chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
-                currentChatHistory = [];
-                updateStatus('Chat cleared! Your memories are safe 💜', '');
-                console.log('✅ Chat display cleared (memories preserved on server)');
+                updateStatus('Chat display cleared! Your memories are safe 💜', '');
+                console.log('✅ Chat display cleared (memories preserved in localStorage)');
             });
         }
 
-        async function clearMemory() {
+        function clearMemory() {
             const count = Math.floor(conversationHistory.length / 2);
             
             if (count === 0) {
@@ -882,41 +960,21 @@
             }
             
             showModal(
-                '⚠️ Delete All Memories?', 
-                `This will permanently delete ALL ${count} stored conversation${count !== 1 ? 's' : ''} from the server.\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?`, 
-                async () => {
-                    try {
-                        updateStatus('Deleting all memories...', 'active');
-                        
-                        const response = await fetch(`${API_ENDPOINT}/api/conversations`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': `Bearer ${authToken}`
-                            }
-                        });
-
-                        if (!response.ok) {
-                            throw new Error('Failed to delete memories');
-                        }
-
-                        const data = await response.json();
-                        console.log(`🗑️ Deleted ${data.deleted} messages from server`);
-                        
-                        conversationHistory = [];
-                        updateMemoryCount();
-                        
-                        const chatContainer = document.getElementById('chatContainer');
-                        chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
-                        
-                        updateStatus('All memories deleted successfully! Starting fresh 💜', '');
-                        
-                        showModal('✅ Memories Cleared', `All ${data.deleted} messages have been permanently deleted from the server.\n\nJune has forgotten everything and you're starting fresh! 💜`);
-                        
-                    } catch (error) {
-                        console.error('❌ Clear memory error:', error);
-                        updateStatus('Failed to delete memories', '');
-                        showModal('Error', 'Failed to delete memories from server. Please try again.');
-                    }
+                'Delete All Memories?', 
+                `This will permanently delete all ${count} stored conversation${count !== 1 ? 's' : ''} from localStorage.\nThis action CANNOT be undone!\nAre you absolutely sure?`, 
+                () => {
+                    // 🗑️ COMPLETELY DELETE FROM LOCALSTORAGE
+                    conversationHistory = [];
+                    localStorage.removeItem(STORAGE_KEYS.CONVERSATIONS);
+                    updateMemoryCount();
+                    
+                    const chatContainer = document.getElementById('chatContainer');
+                    chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
+                    
+                    updateStatus('All memories deleted successfully! Starting fresh 💜', '');
+                    console.log('🗑️ Completely deleted june_conversations_encrypted from localStorage');
+                    
+                    showModal('Memories Cleared', `all ${count} conversation${count !== 1 ? 's' : ''} have been permanently deleted from localStorage.\nJune has forgotten everything and you're starting fresh! 💜`);
                 }
             );
         }
@@ -940,7 +998,7 @@
             
             memoryListDiv.innerHTML = memoryHTML;
             memoryListDiv.classList.remove('hidden');
-            modalMessage.textContent = `June remembers ${Math.floor(count)} conversations with you, ${ownerName}! 💜\n\nAll your memories are safely stored and June will always remember them.`;
+            modalMessage.textContent = `June remembers ${Math.floor(count)} conversations with you, ${ownerName}! 💜\n\nAll your memories are safely stored in your browser's localStorage and will persist even after logout.`;
             
             document.getElementById('modalTitle').textContent = 'Memories';
             const modal = document.getElementById('modal');
@@ -954,11 +1012,17 @@
         }
 
         function logout() {
-            showModal('Logout', 'Are you sure you want to logout? (Your memories are saved on the server)', () => {
+            showModal('Logout', 'Your conversations are saved in localStorage and will be preserved after logout!\nOnly your login session will be cleared.\nLogout now?', () => {
                 authToken = '';
                 ownerName = '';
-                conversationHistory = [];
-                currentChatHistory = [];
+                
+                // 🔥 ONLY CLEAR LOGIN CREDENTIALS, NOT CONVERSATIONS
+                localStorage.removeItem(STORAGE_KEYS.TOKEN);
+                localStorage.removeItem(STORAGE_KEYS.NAME);
+                // 💾 CONVERSATIONS STAY IN LOCALSTORAGE!
+                
+                console.log('✅ Logged out (conversations preserved in localStorage)');
+                
                 document.getElementById('setupScreen').classList.remove('hidden');
                 document.getElementById('mainScreen').classList.add('hidden');
                 document.getElementById('ownerName').value = '';

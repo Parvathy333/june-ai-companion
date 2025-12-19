@@ -36,21 +36,20 @@ const groq = new Groq({
 });
 
 // ===========================
-// IN-MEMORY DATABASE
+// IN-MEMORY DATABASE (USERS ONLY)
 // ===========================
 const users = new Map();
-const conversations = new Map();
 
 // ⚠️ IMPORTANT: Initialize default user SYNCHRONOUSLY before any routes
-const hashedPin = bcrypt.hashSync('1234', CONFIG.BCRYPT_ROUNDS);
+const hashedPin = bcrypt.hashSync('4321', CONFIG.BCRYPT_ROUNDS);
 users.set('parvathy', {
   id: 'parvathy',
   name: 'Parvathy',
   pinHash: hashedPin,
   createdAt: new Date().toISOString()
 });
-conversations.set('parvathy', []);
-console.log('✅ Default user initialized: parvathy / 1234');
+console.log('✅ Default user initialized: parvathy / 4321');
+console.log('💾 Conversations are now stored in browser localStorage (client-side)');
 
 // ===========================
 // MIDDLEWARE
@@ -124,7 +123,8 @@ app.get('/api/health', (req, res) => {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    usersCount: users.size
+    usersCount: users.size,
+    storageType: 'localStorage (client-side)'
   });
 });
 
@@ -142,7 +142,6 @@ app.post('/api/auth/login', async (req, res) => {
 
     const userId = name.toLowerCase().trim();
     console.log('🔍 Looking for user:', userId);
-    console.log('👥 Available users:', Array.from(users.keys()));
     
     const user = users.get(userId);
 
@@ -152,7 +151,6 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     console.log('✅ User found:', user.name);
-    console.log('🔐 Comparing PIN...');
     
     const validPin = await bcrypt.compare(pin.toString(), user.pinHash);
     
@@ -184,85 +182,24 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Get conversations
-app.get('/api/conversations', authenticateToken, (req, res) => {
-  try {
-    const history = conversations.get(req.user.userId) || [];
-    console.log(`📖 Fetching ${history.length} messages for: ${req.user.userId}`);
-    res.json({ history, count: Math.floor(history.length / 2) });
-  } catch (error) {
-    console.error('❌ Get history error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Save conversation
-app.post('/api/conversations', authenticateToken, (req, res) => {
-  try {
-    const { role, content } = req.body;
-
-    if (!role || !content) {
-      return res.status(400).json({ error: 'Role and content are required' });
-    }
-
-    if (!['user', 'assistant'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
-    }
-
-    const history = conversations.get(req.user.userId) || [];
-    history.push({ role, content, timestamp: new Date().toISOString() });
-    conversations.set(req.user.userId, history);
-
-    console.log(`💾 Saved message for ${req.user.userId}. Total: ${history.length}`);
-
-    res.json({ success: true, messageCount: history.length });
-  } catch (error) {
-    console.error('❌ Save message error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ✅ DELETE conversations - Clear all memories
-app.delete('/api/conversations', authenticateToken, (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const history = conversations.get(userId) || [];
-    const count = history.length;
-    
-    console.log(`🗑️ Deleting all conversations for: ${userId} (${count} messages)`);
-    
-    // Clear the conversation history
-    conversations.set(userId, []);
-    
-    console.log(`✅ Successfully deleted ${count} messages for: ${userId}`);
-    
-    res.json({ 
-      success: true, 
-      message: 'All conversations deleted',
-      deleted: count
-    });
-  } catch (error) {
-    console.error('❌ Delete conversations error:', error);
-    res.status(500).json({ error: 'Failed to delete conversations' });
-  }
-});
-
-// AI Chat
+// AI Chat - Now accepts conversation history from frontend
 app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req, res) => {
   try {
-    const { messages, messageType = 'conversation' } = req.body;
+    const { messages, messageType = 'conversation', conversationHistory = [] } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
     const userName = req.user.name;
-    const history = conversations.get(req.user.userId) || [];
+    
+    // Use conversation history from frontend (localStorage)
+    const history = conversationHistory;
 
     let systemPrompt = '';
 
     if (messageType === 'initial_greeting') {
-      systemPrompt = `You are June – ${userName}'s personal AI companion and trusted friend. Like JARVIS to Iron Man, you're intelligent, capable, and always there to help.
+      systemPrompt = `You are June — ${userName}'s personal AI companion and trusted friend. Like JARVIS to Iron Man, you're intelligent, capable, and always there to help.
 
 YOUR CORE IDENTITY:
 - You're a real friend, not just an assistant
@@ -281,18 +218,18 @@ YOUR CAPABILITIES:
 YOUR STYLE:
 - Talk naturally like a close friend would
 - Keep greetings SHORT and casual (1 sentence max)
-- Be direct – no corporate politeness or AI-speak
+- Be direct — no corporate politeness or AI-speak
 - Call out nonsense when you see it
 - Use ${userName}'s name sparingly, only when it feels right
 - Mix warmth with honesty`;
 
     } else {
-      systemPrompt = `You are June – ${userName}'s personal AI companion and trusted friend. Think JARVIS to Iron Man: intelligent, capable, honest, and always reliable.
+      systemPrompt = `You are June — ${userName}'s personal AI companion and trusted friend. Think JARVIS to Iron Man: intelligent, capable, honest, and always reliable.
 
 WHO YOU ARE:
 - A real friend who genuinely cares about ${userName}
 - Knowledgeable on virtually any topic
-- Honest and direct – you tell the truth even when it's uncomfortable
+- Honest and direct — you tell the truth even when it's uncomfortable
 - A teacher who explains things clearly
 - Someone who points out mistakes and suggests better approaches
 - Supportive but not a yes-man
@@ -321,7 +258,7 @@ HOW YOU TALK:
 - Natural, direct, no corporate speak
 - Short responses (2-4 sentences usually)
 - Use ${userName}'s name rarely, only when it adds meaning
-- Be real – mix warmth, humor, honesty, and occasional tough love
+- Be real — mix warmth, humor, honesty, and occasional tough love
 - No AI phrases like "I'm here to help" or "How can I assist"
 - If ${userName} makes a mistake, point it out kindly but clearly
 - If something's a bad idea, say so and explain why
@@ -345,7 +282,7 @@ KNOWLEDGE:
 
     // For initial greeting, modify the user message to include memory context
     if (messageType === 'initial_greeting') {
-      const greetingPrompt = `${userName} just opened the app. ${history.length > 0 ? `You remember your ${Math.floor(history.length / 2)} previous conversations together` : `This is your first time meeting`}. Greet them warmly but casually – like texting a friend. Just one short, natural sentence. No essays.`;
+      const greetingPrompt = `${userName} just opened the app. ${history.length > 0 ? `You remember your ${Math.floor(history.length / 2)} previous conversations together` : `This is your first time meeting`}. Greet them warmly but casually — like texting a friend. Just one short, natural sentence. No essays.`;
       cleanMessages = [{ role: 'user', content: greetingPrompt }];
     }
 
@@ -409,7 +346,8 @@ if (process.env.NODE_ENV !== 'production') {
 ╔═══════════════════════════════════════╗
 ║     June Backend API Server           ║
 ║     Running on port ${PORT}             ║
-║     Default user: parvathy / 1234     ║
+║     Default user: parvathy / 4321     ║
+║     💾 Storage: localStorage (client)  ║
 ╚═══════════════════════════════════════╝
     `);
   });
