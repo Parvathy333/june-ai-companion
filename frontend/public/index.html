@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="June">
     <meta name="theme-color" content="#667eea">
     <link rel="apple-touch-icon" href="icon2.png">
-<link rel="icon" type="image/png" href="icon2.png">
+    <link rel="icon" type="image/png" href="icon2.png">
     <title>June - Your AI Companion</title>
     <style>
         * {
@@ -491,7 +491,9 @@
         let modalCallback = null;
         let isVoiceInput = false;
         let recognitionTimeout = null;
-        let encryptionKey = ''; // 🔐 Encryption key derived from PIN
+        let encryptionKey = '';
+        let microphonePermissionGranted = false;
+        let isRecognitionActive = false; // Track recognition state
 
         // 💾 LOCAL STORAGE KEYS
         const STORAGE_KEYS = {
@@ -502,7 +504,6 @@
 
         // 🔐 ENCRYPTION FUNCTIONS
         async function deriveEncryptionKey(pin, username) {
-            // Create a unique key from PIN + username
             const combinedSecret = `${username.toLowerCase()}_${pin}_june_secret_2024`;
             const encoder = new TextEncoder();
             const data = encoder.encode(combinedSecret);
@@ -513,7 +514,6 @@
 
         function encryptData(text, key) {
             try {
-                // Simple XOR-based encryption with key stretching
                 let encrypted = '';
                 const keyLength = key.length;
                 for (let i = 0; i < text.length; i++) {
@@ -521,17 +521,15 @@
                     const keyChar = key.charCodeAt(i % keyLength);
                     encrypted += String.fromCharCode(charCode ^ keyChar);
                 }
-                // Convert to base64 for safe storage
                 return btoa(encrypted);
             } catch (error) {
                 console.error('❌ Encryption error:', error);
-                return text; // Fallback to unencrypted if error
+                return text;
             }
         }
 
         function decryptData(encryptedText, key) {
             try {
-                // Decode from base64
                 const encrypted = atob(encryptedText);
                 let decrypted = '';
                 const keyLength = key.length;
@@ -543,14 +541,179 @@
                 return decrypted;
             } catch (error) {
                 console.error('❌ Decryption error:', error);
-                return null; // Return null if decryption fails
+                return null;
             }
+        }
+
+        // 🎤 Request microphone permission explicitly
+        async function requestMicrophonePermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                microphonePermissionGranted = true;
+                console.log('✅ Microphone permission granted');
+                return true;
+            } catch (error) {
+                console.error('❌ Microphone permission denied:', error);
+                microphonePermissionGranted = false;
+                
+                showModal(
+                    'Microphone Access Required',
+                    'June needs microphone access for voice input.\n\n' +
+                    '📱 To enable:\n' +
+                    '1. Tap the 🔒 icon in Chrome\'s address bar\n' +
+                    '2. Tap "Permissions" → "Microphone"\n' +
+                    '3. Change to "Allow"\n' +
+                    '4. Reload the page\n\n' +
+                    'OR:\n' +
+                    'Chrome → Settings → Site settings → Microphone → Allow for this site'
+                );
+                return false;
+            }
+        }
+
+        // 🎤 Initialize Speech Recognition (can be called multiple times safely)
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                console.warn('⚠️ Speech Recognition not available');
+                return null;
+            }
+
+            // Clean up old recognition if exists
+            if (recognition) {
+                try {
+                    recognition.stop();
+                    recognition.onstart = null;
+                    recognition.onresult = null;
+                    recognition.onerror = null;
+                    recognition.onend = null;
+                } catch (e) {
+                    console.log('Old recognition cleanup:', e.message);
+                }
+            }
+
+            const rec = new SpeechRecognition();
+            rec.continuous = false;
+            rec.interimResults = true;
+            rec.lang = 'en-US';
+            rec.maxAlternatives = 1;
+
+            rec.onstart = () => {
+                isListening = true;
+                isRecognitionActive = true;
+                isVoiceInput = true;
+                updateStatus('🎤 Listening... Speak now!', 'listening');
+                document.getElementById('voiceToggle').classList.add('listening');
+                console.log('✅ Recognition started');
+                
+                // Safety timeout
+                recognitionTimeout = setTimeout(() => {
+                    if (isListening && isRecognitionActive) {
+                        console.log('⏱️ Recognition timeout - stopping');
+                        stopListening();
+                        updateStatus('Timeout - try again!', '');
+                    }
+                }, 20000);
+            };
+
+            rec.onresult = (event) => {
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    
+                    if (event.results[i].isFinal) {
+                        clearTimeout(recognitionTimeout);
+                        updateStatus(`"${transcript}"`, 'listening');
+                        console.log('🎤 Final transcript:', transcript);
+                        
+                        if (transcript && transcript.trim()) {
+                            setTimeout(() => {
+                                handleUserInput(transcript.trim());
+                            }, 500);
+                        } else {
+                            updateStatus('No speech detected. Try again!', '');
+                            isVoiceInput = false;
+                        }
+                        
+                        stopListening();
+                    } else {
+                        updateStatus(`"${transcript}..."`, 'listening');
+                    }
+                }
+            };
+
+            rec.onerror = (event) => {
+                clearTimeout(recognitionTimeout);
+                console.error('🎤 Recognition error:', event.error);
+                
+                let errorMsg = '';
+                
+                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                    errorMsg = '⚠️ Microphone permission denied';
+                    microphonePermissionGranted = false;
+                    showModal(
+                        'Microphone Access Denied',
+                        '📱 To enable voice input:\n\n' +
+                        '1. Tap the 🔒 icon in Chrome\'s address bar\n' +
+                        '2. Tap "Permissions"\n' +
+                        '3. Change "Microphone" to "Allow"\n' +
+                        '4. Reload the page\n\n' +
+                        'OR go to:\n' +
+                        'Chrome → Settings → Site settings → Microphone\n' +
+                        '→ Allow for this site'
+                    );
+                } else if (event.error === 'no-speech') {
+                    errorMsg = 'No speech detected. Try again!';
+                } else if (event.error === 'aborted') {
+                    errorMsg = 'Ready to listen...';
+                } else if (event.error === 'network') {
+                    errorMsg = 'Network error. Check connection.';
+                } else if (event.error === 'already-started') {
+                    // Handle already-started gracefully
+                    console.log('⚠️ Recognition already started, resetting...');
+                    isRecognitionActive = false;
+                    setTimeout(() => {
+                        recognition = initSpeechRecognition();
+                    }, 500);
+                    return;
+                } else {
+                    errorMsg = `Microphone error: ${event.error}`;
+                }
+                
+                updateStatus(errorMsg, '');
+                isVoiceInput = false;
+                isRecognitionActive = false;
+                stopListening();
+                
+                // Auto-reinitialize on errors (except aborted and already-started)
+                if (event.error !== 'aborted' && event.error !== 'already-started') {
+                    console.log('🔄 Auto-reinitializing speech recognition...');
+                    setTimeout(() => {
+                        recognition = initSpeechRecognition();
+                    }, 1000);
+                }
+            };
+
+            rec.onend = () => {
+                clearTimeout(recognitionTimeout);
+                isListening = false;
+                isRecognitionActive = false;
+                document.getElementById('voiceToggle').classList.remove('listening');
+                console.log('✅ Recognition ended');
+                
+                if (!isVoiceInput) {
+                    updateStatus('Ready to listen...', '');
+                }
+            };
+
+            console.log('✅ Speech recognition initialized');
+            return rec;
         }
 
         function init() {
             console.log('🚀 Initializing June...');
             
-            // ✅ Check for saved token on app load
             const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
             const savedName = localStorage.getItem(STORAGE_KEYS.NAME);
             
@@ -558,90 +721,12 @@
                 console.log('✅ Found saved session, auto-logging in...');
                 authToken = savedToken;
                 ownerName = savedName;
-                
-                // 🔐 Need to re-derive encryption key, but we don't have PIN
-                // Show login screen to get PIN for decryption
                 console.log('🔐 PIN required for decryption - showing login screen');
-                return; // Don't auto-login, need PIN for encryption key
+                return;
             }
             
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            
-            if (SpeechRecognition) {
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = true;
-                recognition.lang = 'en-US';
-                recognition.maxAlternatives = 1;
-
-                recognition.onstart = () => {
-                    isListening = true;
-                    isVoiceInput = true;
-                    updateStatus('🎤 Listening... Speak now!', 'listening');
-                    document.getElementById('voiceToggle').classList.add('listening');
-                    
-                    recognitionTimeout = setTimeout(() => {
-                        if (isListening) {
-                            stopListening();
-                            updateStatus('Timeout - try again!', '');
-                        }
-                    }, 20000);
-                };
-
-                recognition.onresult = (event) => {
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        const transcript = event.results[i][0].transcript;
-                        
-                        if (event.results[i].isFinal) {
-                            clearTimeout(recognitionTimeout);
-                            updateStatus(`"${transcript}"`, 'listening');
-                            
-                            if (transcript && transcript.trim()) {
-                                setTimeout(() => {
-                                    handleUserInput(transcript.trim());
-                                }, 500);
-                            } else {
-                                updateStatus('No speech detected. Try again!', '');
-                                isVoiceInput = false;
-                            }
-                            
-                            stopListening();
-                        } else {
-                            updateStatus(`"${transcript}..."`, 'listening');
-                        }
-                    }
-                };
-
-                recognition.onerror = (event) => {
-                    clearTimeout(recognitionTimeout);
-                    let errorMsg = '';
-                    
-                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                        errorMsg = '⚠️ Microphone permission denied';
-                        showModal('Microphone Access', 'Please allow microphone access in your browser settings to use voice input.');
-                    } else if (event.error === 'no-speech') {
-                        errorMsg = 'No speech detected. Try again!';
-                    } else if (event.error === 'aborted') {
-                        errorMsg = 'Ready to listen...';
-                    } else {
-                        errorMsg = `Microphone error: ${event.error}`;
-                    }
-                    
-                    updateStatus(errorMsg, '');
-                    isVoiceInput = false;
-                    stopListening();
-                };
-
-                recognition.onend = () => {
-                    clearTimeout(recognitionTimeout);
-                    isListening = false;
-                    document.getElementById('voiceToggle').classList.remove('listening');
-                    
-                    if (!isVoiceInput) {
-                        updateStatus('Ready to listen...', '');
-                    }
-                };
-            }
+            // Initialize speech recognition
+            recognition = initSpeechRecognition();
 
             if (synthesis) {
                 synthesis.onvoiceschanged = () => {
@@ -700,38 +785,46 @@
                 authToken = data.token;
                 ownerName = data.user.name;
                 
-                // 🔐 DERIVE ENCRYPTION KEY FROM PIN
                 encryptionKey = await deriveEncryptionKey(pinInput, nameInput);
                 console.log('🔐 Encryption key generated');
                 
-                // 💾 Save to localStorage
                 localStorage.setItem(STORAGE_KEYS.TOKEN, authToken);
                 localStorage.setItem(STORAGE_KEYS.NAME, ownerName);
                 console.log('💾 Credentials saved to localStorage');
                 
                 loadConversationsFromLocalStorage();
-                showMainScreen();
+                await showMainScreen();
             } catch (error) {
                 console.error('❌ Login error:', error);
                 showModal('Error', 'Could not connect to server. Please check your connection and try again.');
             }
         }
 
-        function showMainScreen() {
+        async function showMainScreen() {
             console.log('✅ Showing main screen');
             document.getElementById('setupScreen').classList.add('hidden');
             document.getElementById('mainScreen').classList.remove('hidden');
             document.getElementById('ownerGreeting').textContent = `Hello ${ownerName}! 💜`;
+            
+            // Initialize speech recognition if not already done
+            if (!recognition) {
+                console.log('🔄 Initializing speech recognition...');
+                recognition = initSpeechRecognition();
+            }
+            
+            // 🎤 Request microphone permission immediately after login
+            if (recognition && !microphonePermissionGranted) {
+                console.log('🎤 Requesting microphone permission...');
+                await requestMicrophonePermission();
+            }
         }
 
-        // 💾 LOAD CONVERSATIONS FROM LOCALSTORAGE
         function loadConversationsFromLocalStorage() {
             try {
                 console.log('📂 Loading conversations from localStorage...');
                 const saved = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS);
                 
                 if (saved) {
-                    // 🔐 DECRYPT the conversations
                     const decrypted = decryptData(saved, encryptionKey);
                     if (decrypted) {
                         conversationHistory = JSON.parse(decrypted);
@@ -742,17 +835,15 @@
                     }
                 } else {
                     conversationHistory = [];
-                    console.log('📝 No saved conversations found, starting fresh');
+                    console.log('🆕 No saved conversations found, starting fresh');
                 }
                 
                 updateMemoryCount();
                 
-                // 🔥 ALWAYS START WITH CLEAN CHAT WINDOW
                 const chatContainer = document.getElementById('chatContainer');
                 chatContainer.innerHTML = '<div class="chat-message system">Tap the microphone or type below to talk with June</div>';
                 console.log('✨ Chat window cleared - ready for new conversation!');
                 
-                // Still greet the user (but don't show old messages)
                 getAIResponse('initial_greeting');
             } catch (error) {
                 console.error('❌ Load conversations error:', error);
@@ -760,44 +851,111 @@
             }
         }
 
-        // 💾 SAVE CONVERSATIONS TO LOCALSTORAGE (ENCRYPTED)
         function saveConversationsToLocalStorage() {
             try {
                 const jsonData = JSON.stringify(conversationHistory);
-                // 🔐 ENCRYPT before saving
                 const encrypted = encryptData(jsonData, encryptionKey);
                 localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, encrypted);
-                console.log(`🔐 Encrypted and saved ${conversationHistory.length} messages to localStorage`);
+                console.log(`🔒 Encrypted and saved ${conversationHistory.length} messages to localStorage`);
             } catch (error) {
                 console.error('❌ Save conversations error:', error);
             }
         }
 
         async function toggleListening() {
-            if (!recognition) {
-                showModal('Not Supported', 'Voice input is not supported on this device or browser.');
-                return;
+            // Reinitialize if recognition doesn't exist or is in bad state
+            if (!recognition || !isRecognitionActive && !isListening) {
+                console.log('🔄 Reinitializing recognition...');
+                recognition = initSpeechRecognition();
+                
+                if (!recognition) {
+                    showModal(
+                        'Voice Not Supported',
+                        'Voice input is not supported on this device or browser.\n\n' +
+                        'Voice input requires:\n' +
+                        '• Google Chrome browser\n' +
+                        '• HTTPS connection (✅ you have this)\n' +
+                        '• Microphone permission\n\n' +
+                        'Try updating Chrome or using a different device.'
+                    );
+                    return;
+                }
             }
 
             if (isListening) {
                 stopListening();
             } else {
+                // Request permission first if not granted
+                if (!microphonePermissionGranted) {
+                    const granted = await requestMicrophonePermission();
+                    if (!granted) {
+                        return;
+                    }
+                }
                 startListening();
             }
         }
 
         function startListening() {
-            if (recognition) {
+            if (!recognition) {
+                console.log('🔄 Recognition null, reinitializing...');
+                recognition = initSpeechRecognition();
+            }
+            
+            if (recognition && !isRecognitionActive) {
                 try {
-                    recognition.start();
+                    // Ensure clean state before starting
+                    if (isListening) {
+                        console.log('⚠️ Already listening, stopping first...');
+                        recognition.stop();
+                        // Wait a bit before restarting
+                        setTimeout(() => {
+                            try {
+                                recognition.start();
+                            } catch (e) {
+                                console.error('Delayed start error:', e);
+                                handleRecognitionError(e);
+                            }
+                        }, 200);
+                    } else {
+                        recognition.start();
+                    }
                 } catch (error) {
                     console.error('Recognition start error:', error);
+                    handleRecognitionError(error);
                 }
+            }
+        }
+
+        function handleRecognitionError(error) {
+            if (error.name === 'NotAllowedError' || error.message.includes('not-allowed')) {
+                microphonePermissionGranted = false;
+                showModal(
+                    'Permission Required',
+                    'Microphone access was blocked.\n\n' +
+                    'Please allow microphone access in your browser settings and try again.'
+                );
+            } else if (error.message && error.message.includes('already started')) {
+                console.log('⚠️ Recognition already started, resetting...');
+                isRecognitionActive = false;
+                isListening = false;
+                setTimeout(() => {
+                    recognition = initSpeechRecognition();
+                    updateStatus('Ready to listen...', '');
+                }, 500);
+            } else {
+                console.error('Unhandled error:', error);
+                updateStatus('Microphone error. Try again!', '');
+                // Reinitialize on unknown errors
+                setTimeout(() => {
+                    recognition = initSpeechRecognition();
+                }, 1000);
             }
         }
 
         function stopListening() {
             isListening = false;
+            isRecognitionActive = false;
             clearTimeout(recognitionTimeout);
             
             if (recognition) {
@@ -835,7 +993,7 @@
                     body: JSON.stringify({
                         messages,
                         messageType,
-                        conversationHistory // 🔥 SEND LOCALSTORAGE HISTORY TO AI
+                        conversationHistory
                     })
                 });
 
@@ -854,7 +1012,6 @@
                 }
                 
                 if (messageType !== 'initial_greeting') {
-                    // 💾 SAVE TO LOCALSTORAGE
                     conversationHistory.push({ role: 'user', content: userMessage });
                     conversationHistory.push({ role: 'assistant', content: aiResponse });
                     saveConversationsToLocalStorage();
@@ -963,7 +1120,6 @@
                 'Delete All Memories?', 
                 `This will permanently delete all ${count} stored conversation${count !== 1 ? 's' : ''} from localStorage.\nThis action CANNOT be undone!\nAre you absolutely sure?`, 
                 () => {
-                    // 🗑️ COMPLETELY DELETE FROM LOCALSTORAGE
                     conversationHistory = [];
                     localStorage.removeItem(STORAGE_KEYS.CONVERSATIONS);
                     updateMemoryCount();
@@ -974,7 +1130,7 @@
                     updateStatus('All memories deleted successfully! Starting fresh 💜', '');
                     console.log('🗑️ Completely deleted june_conversations_encrypted from localStorage');
                     
-                    showModal('Memories Cleared', `all ${count} conversation${count !== 1 ? 's' : ''} have been permanently deleted from localStorage.\nJune has forgotten everything and you're starting fresh! 💜`);
+                    showModal('Memories Cleared', `All ${count} conversation${count !== 1 ? 's' : ''} have been permanently deleted from localStorage.\nJune has forgotten everything and you're starting fresh! 💜`);
                 }
             );
         }
@@ -1016,10 +1172,8 @@
                 authToken = '';
                 ownerName = '';
                 
-                // 🔥 ONLY CLEAR LOGIN CREDENTIALS, NOT CONVERSATIONS
                 localStorage.removeItem(STORAGE_KEYS.TOKEN);
                 localStorage.removeItem(STORAGE_KEYS.NAME);
-                // 💾 CONVERSATIONS STAY IN LOCALSTORAGE!
                 
                 console.log('✅ Logged out (conversations preserved in localStorage)');
                 
